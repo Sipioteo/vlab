@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/server';
+import { mockState } from '@/test/handlers';
 import { renderWithProviders } from '@/test/utils';
 import { App } from '@/App';
 import * as f from '@/test/fixtures';
@@ -39,7 +40,7 @@ function posts() {
   return requests.filter((r) => r.method === 'POST' && r.path === '/api/v1/orders/manual');
 }
 
-/** Selects Marco Rossi, adds the VR headset and fills the two time slots. */
+/** Selects Marco Rossi and adds the VR headset (no times: the window applies). */
 async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: 'Nuovo prestito manuale', level: 1 });
 
@@ -48,9 +49,6 @@ async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
 
   await user.type(screen.getByLabelText('Aggiungi attrezzatura'), 'visore');
   await user.click(await screen.findByRole('button', { name: /Visore VR Meta Quest 3 128GB/ }));
-
-  fireEvent.change(screen.getByLabelText('Ritiro'), { target: { value: '09:30' } });
-  fireEvent.change(screen.getByLabelText('Riconsegna'), { target: { value: '16:00' } });
 }
 
 describe('StaffOrdersPage — "Nuovo prestito" gating', () => {
@@ -84,13 +82,17 @@ describe('StaffOrderCreatePage', () => {
     await waitFor(() => {
       expect(posts()).toHaveLength(1);
     });
+    // Time-window model (SPEC v1.4 §5.3): no override → null times, the
+    // lab's weekday window applies.
     expect(posts()[0]?.body).toMatchObject({
       user_id: 3,
       items: [{ product_id: 128, quantity: 1 }],
       start_date: todayIso(),
       end_date: todayIso(),
-      pickup_time: '09:30',
-      return_time: '16:00',
+      pickup_time: null,
+      pickup_time_end: null,
+      return_time: null,
+      return_time_end: null,
       subject: 'Laboratorio di Ripresa',
       initial_status: 'approved',
     });
@@ -180,6 +182,76 @@ describe('StaffOrderCreatePage', () => {
     expect(
       await screen.findByText('Prestito creato forzando la disponibilità: risulterà sovraprenotato.'),
     ).toBeVisible();
+  });
+
+  it('sends explicit overrides when "Orario personalizzato" is enabled', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, { route: '/gestione/ordini/nuovo', role: 'technician' });
+    await fillMinimalForm(user);
+
+    await user.click(screen.getByRole('switch', { name: 'Orario personalizzato' }));
+    fireEvent.change(screen.getByLabelText('Ritiro — orario'), { target: { value: '10:15' } });
+    fireEvent.change(screen.getByLabelText(/Ritiro — fine fascia/), { target: { value: '11:00' } });
+    fireEvent.change(screen.getByLabelText('Riconsegna — orario'), { target: { value: '15:00' } });
+
+    await user.click(screen.getByRole('button', { name: 'Crea prestito' }));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0]?.body).toMatchObject({
+      pickup_time: '10:15',
+      pickup_time_end: '11:00',
+      return_time: '15:00',
+      return_time_end: null,
+    });
+  });
+
+  it('runs the live availability check (debounced) with the right payload and shows the row status', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, { route: '/gestione/ordini/nuovo', role: 'technician' });
+    await fillMinimalForm(user);
+
+    // Debounced POST /availability/check with items + dates.
+    await waitFor(() => {
+      const checks = requests.filter(
+        (r) => r.method === 'POST' && r.path === '/api/v1/availability/check',
+      );
+      expect(checks.length).toBeGreaterThan(0);
+      expect(checks[checks.length - 1]?.body).toMatchObject({
+        items: [{ product_id: 128, quantity: 1 }],
+        pickup_date: todayIso(),
+        return_date: todayIso(),
+      });
+    });
+    // Green: sufficient (fixture: available 4 of 1 requested).
+    expect(await screen.findByTestId('row-availability-ok')).toHaveTextContent('Disponibile');
+  });
+
+  it('shows amber and red row states and blocks submit on a red conflict', async () => {
+    const user = userEvent.setup();
+    // Amber: only 1 available of 2 requested.
+    mockState.check = {
+      ...f.availabilityCheckOk,
+      availability: [
+        { product_id: 128, requested: 2, available: 1, capacity: 6, sufficient: false },
+      ],
+    };
+    renderWithProviders(<App />, { route: '/gestione/ordini/nuovo', role: 'technician' });
+    await fillMinimalForm(user);
+    expect(await screen.findByTestId('row-availability-partial')).toHaveTextContent(
+      'Solo 1 disponibili su 2 richiesti',
+    );
+    // The submit is disabled with a visible reason (error prevention).
+    expect(screen.getByRole('button', { name: 'Crea prestito' })).toBeDisabled();
+
+    // Red: nothing available — change the quantity to re-trigger the check.
+    mockState.check = {
+      ...f.availabilityCheckOk,
+      availability: [
+        { product_id: 128, requested: 2, available: 0, capacity: 6, sufficient: false },
+      ],
+    };
+    await user.click(screen.getByRole('button', { name: /Quantità Visore VR Meta Quest 3 128GB \+/ }));
+    await screen.findByTestId('row-availability-ko');
+    expect(screen.getByText(/risolvi i conflitti/)).toBeVisible();
   });
 
   it('shows the non-blocking regulation notice when the student has pending regulations', async () => {

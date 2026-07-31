@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCartMutations, useCartQuery } from '@/hooks/useCart';
 import { useToast } from '@/components/Toast';
 import { useSettings } from '@/settings/SettingsProvider';
-import { AvailabilityBadge, DateRangePicker, LimitWarningList, TimeSlotPicker } from '@/components/domain';
+import { AvailabilityBadge, DateRangePicker, LimitWarningList } from '@/components/domain';
 import {
   Button,
   Card,
@@ -88,6 +88,14 @@ export function CartPage() {
 
       <div className="vl-cart">
         <div className="vl-stack">
+          {/* Problems FIRST and sticky (owner request B): limit warnings sit
+              above the list they condition, not below the fold. */}
+          {check && check.violations.length > 0 ? (
+            <div className="vl-problems vl-problems--sticky">
+              <LimitWarningList violations={check.violations} />
+            </div>
+          ) : null}
+
           <Card
             title={`${data.items_count} ${data.items_count === 1 ? t('cart.item') : t('cart.items')}`}
             headingLevel={2}
@@ -243,25 +251,31 @@ export function CartPage() {
               </p>
             ) : null}
 
+            {/* No time picker (owner request D): the lab's weekday window
+                applies, shown as plain information. */}
             {check ? (
-              <div className="vl-form-grid vl-form-grid--2" style={{ marginTop: 'var(--sp-4)' }}>
-                <TimeSlotPicker
-                  slots={check.pickup_slots}
-                  value={data.pickup_time}
-                  label={t('cart.pickupTime')}
-                  onChange={(value) => setDates.mutate({ pickup_time: value }, { onError: pushError })}
-                />
-                <TimeSlotPicker
-                  slots={check.return_slots}
-                  value={data.return_time}
-                  label={t('cart.returnTime')}
-                  onChange={(value) => setDates.mutate({ return_time: value }, { onError: pushError })}
-                />
+              <div className="vl-stack" style={{ gap: 'var(--sp-1)', marginTop: 'var(--sp-3)' }}>
+                {check.pickup_window ? (
+                  <p className="vl-window-note">
+                    <Icon name="clock" size={14} />
+                    {t('timeWindow.pickupLine', {
+                      date: formatDate(data.pickup_date),
+                      window: check.pickup_window,
+                    })}
+                  </p>
+                ) : null}
+                {check.return_window ? (
+                  <p className="vl-window-note">
+                    <Icon name="clock" size={14} />
+                    {t('timeWindow.returnLine', {
+                      date: formatDate(data.return_date),
+                      window: check.return_window,
+                    })}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </Card>
-
-          {check ? <LimitWarningList violations={check.violations} /> : null}
         </div>
 
         <aside className="vl-cart__aside">

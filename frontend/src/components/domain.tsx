@@ -7,12 +7,13 @@ import { useEnums } from '@/hooks/useEnums';
 import { t } from '@/i18n/it';
 import { formatDate, formatDateTime, formatMonthLabel } from '@/lib/format';
 import type {
+  AvailabilityEntry,
   OrderAction,
   OrderEvent,
   OrderStatus,
   ProductSummary,
   Regulation,
-  TimeSlot,
+  SuggestedSubstitute,
   Violation,
 } from '@/types/api';
 
@@ -207,6 +208,16 @@ const ACTION_VARIANT: Record<string, 'primary' | 'ghost' | 'danger' | 'secondary
   note: 'ghost',
   submit: 'primary',
 };
+
+/**
+ * The state machine's ONE main transition per state (owner request E): the
+ * only action that deserves a primary button. Everything else is secondary.
+ */
+export const PRIMARY_ORDER_ACTIONS: readonly OrderAction[] = ['approve', 'pickup', 'return'];
+
+export function primaryOrderAction(actions: OrderAction[]): OrderAction | null {
+  return PRIMARY_ORDER_ACTIONS.find((a) => actions.includes(a)) ?? null;
+}
 
 /** Buttons are rendered EXCLUSIVELY from Order.allowed_actions (SPEC §8.4). */
 export function OrderActions({
@@ -480,44 +491,73 @@ export function RegulationAcceptBlock({
 export { DateRangePicker } from './DateRangePicker';
 export type { DateRangePickerProps } from './DateRangePicker';
 
-/* ------------------------------------------------------------ TimeSlotPicker */
+/* ----------------------------------------------------------- RowAvailability */
 
-export function TimeSlotPicker({
-  slots,
-  value,
-  onChange,
-  label,
-  emptyHint,
+/**
+ * Per-row live availability status (owner request A): green "Disponibile",
+ * amber "Solo N su M", red "Non disponibile in queste date" — plus the row's
+ * suggested substitutes when the API provides them. Never colour-only.
+ */
+export function RowAvailability({
+  entry,
+  checking,
+  onSwap,
 }: {
-  slots: TimeSlot[];
-  value: string | null;
-  onChange: (value: string) => void;
-  label: string;
-  emptyHint?: string;
+  entry: AvailabilityEntry | null;
+  checking?: boolean;
+  onSwap?: (substitute: SuggestedSubstitute) => void;
 }) {
+  if (!entry) {
+    return checking ? (
+      <span className="vl-subtle" data-testid="row-availability-loading">
+        {t('liveCheck.checking')}
+      </span>
+    ) : null;
+  }
+  const substitutes = entry.suggested_substitutes ?? [];
+  let status: ReactNode;
+  if (entry.sufficient) {
+    status = (
+      <span className="vl-avail vl-avail--ok" data-testid="row-availability-ok">
+        <span className="vl-avail__dot" aria-hidden="true" />
+        {t('liveCheck.available')}
+      </span>
+    );
+  } else if (entry.available > 0) {
+    status = (
+      <span className="vl-avail vl-avail--partial" data-testid="row-availability-partial">
+        <span className="vl-avail__dot" aria-hidden="true" />
+        {t('liveCheck.partial', { available: entry.available, requested: entry.requested })}
+      </span>
+    );
+  } else {
+    status = (
+      <span className="vl-avail vl-avail--ko" data-testid="row-availability-ko">
+        <span className="vl-avail__dot" aria-hidden="true" />
+        {t('cart.availabilityKo')}
+      </span>
+    );
+  }
   return (
-    <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-      <legend className="vl-field__label" style={{ marginBottom: 'var(--sp-2)' }}>
-        {label}
-      </legend>
-      {slots.length === 0 ? (
-        <p className="vl-field__hint">{emptyHint ?? t('cart.datesMissing')}</p>
-      ) : (
-        <div className="vl-chips">
-          {slots.map((slot) => (
-            <button
-              key={slot.start}
-              type="button"
-              className="vl-chip"
-              aria-pressed={value === slot.start}
-              onClick={() => onChange(slot.start)}
-            >
-              {slot.start}–{slot.end}
-            </button>
-          ))}
-        </div>
-      )}
-    </fieldset>
+    <div className="vl-rowavail">
+      {status}
+      {!entry.sufficient && substitutes.length > 0 ? (
+        <span className="vl-rowavail__subs">
+          {t('liveCheck.trySubstitute')}{' '}
+          {substitutes.map((sub) =>
+            onSwap ? (
+              <Button key={sub.product_id} size="sm" variant="outline-accent" onClick={() => onSwap(sub)}>
+                {sub.name} ({sub.available_quantity})
+              </Button>
+            ) : (
+              <Link key={sub.product_id} to={`/prodotto/${sub.slug}`}>
+                {sub.name} ({sub.available_quantity})
+              </Link>
+            ),
+          )}
+        </span>
+      ) : null}
+    </div>
   );
 }
 

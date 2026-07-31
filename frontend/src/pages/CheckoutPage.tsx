@@ -10,7 +10,6 @@ import {
   DateRangePicker,
   LimitWarningList,
   RegulationAcceptBlock,
-  TimeSlotPicker,
 } from '@/components/domain';
 import {
   Alert,
@@ -22,6 +21,7 @@ import {
   TextArea,
   TextInput,
 } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { t } from '@/i18n/it';
 import { addDaysIso, formatDate, inclusiveDays, todayIso } from '@/lib/format';
 import type { AvailabilityCheckResponse } from '@/types/api';
@@ -31,8 +31,6 @@ interface FormState {
   motivation: string;
   professor: string;
   notes: string;
-  pickup_time: string;
-  return_time: string;
 }
 
 export function CheckoutPage() {
@@ -54,8 +52,6 @@ export function CheckoutPage() {
     motivation: '',
     professor: '',
     notes: '',
-    pickup_time: '',
-    return_time: '',
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [accepted, setAccepted] = useState<Record<number, boolean>>({});
@@ -68,16 +64,6 @@ export function CheckoutPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cartData = cart.data;
-
-  /* Seed the time fields from the cart once loaded. */
-  useEffect(() => {
-    if (!cartData) return;
-    setForm((prev) => ({
-      ...prev,
-      pickup_time: prev.pickup_time || (cartData.pickup_time ?? ''),
-      return_time: prev.return_time || (cartData.return_time ?? ''),
-    }));
-  }, [cartData]);
 
   /* Continuous pre-flight validation, debounced 400 ms (SPEC §11.6). */
   useEffect(() => {
@@ -92,9 +78,7 @@ export function CheckoutPage() {
             quantity: item.quantity,
           })),
           pickup_date: cartData.pickup_date,
-          pickup_time: form.pickup_time || cartData.pickup_time,
           return_date: cartData.return_date,
-          return_time: form.return_time || cartData.return_time,
         })
         .then(setCheck)
         .catch(pushError)
@@ -103,7 +87,7 @@ export function CheckoutPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [cartData, form.pickup_time, form.return_time, pushError]);
+  }, [cartData, pushError]);
 
   const requiredRegulations = useMemo(
     () => (check?.required_regulations ?? []).filter((reg) => !reg.accepted),
@@ -121,12 +105,11 @@ export function CheckoutPage() {
 
   const createOrder = useMutation({
     mutationFn: (acknowledge: boolean) =>
+      // No times (owner request D): the lab's weekday window applies.
       api.createOrder({
         from_cart: true,
         pickup_date: cartData?.pickup_date,
-        pickup_time: form.pickup_time || cartData?.pickup_time,
         return_date: cartData?.return_date,
-        return_time: form.return_time || cartData?.return_time,
         subject: form.subject,
         motivation: form.motivation || null,
         professor: form.professor || null,
@@ -219,23 +202,29 @@ export function CheckoutPage() {
       <form onSubmit={onSubmit} noValidate>
         <div className="vl-cart">
           <div className="vl-stack">
-            {availabilityError ? (
-              <Alert level="danger" icon="alert" title={t('checkout.insufficientTitle')}>
-                <p>{t('checkout.insufficientBody')}</p>
-                <ul>
-                  {availabilityError.map((entry) => {
-                    const item = cartData.items.find((i) => i.product_id === entry.product_id);
-                    return (
-                      <li key={entry.product_id}>
-                        {item?.product.name ?? `#${entry.product_id}`}: {entry.available}/{entry.requested}
-                      </li>
-                    );
-                  })}
-                </ul>
-                <Link to="/carrello" className="vl-btn vl-btn--ghost vl-btn--sm">
-                  {t('checkout.recheckDates')}
-                </Link>
-              </Alert>
+            {/* Problems FIRST (owner request B). */}
+            {availabilityError || (check && check.violations.length > 0) ? (
+              <div className="vl-problems">
+                {availabilityError ? (
+                  <Alert level="danger" icon="alert" title={t('checkout.insufficientTitle')}>
+                    <p>{t('checkout.insufficientBody')}</p>
+                    <ul>
+                      {availabilityError.map((entry) => {
+                        const item = cartData.items.find((i) => i.product_id === entry.product_id);
+                        return (
+                          <li key={entry.product_id}>
+                            {item?.product.name ?? `#${entry.product_id}`}: {entry.available}/{entry.requested}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link to="/carrello" className="vl-btn vl-btn--ghost vl-btn--sm">
+                      {t('checkout.recheckDates')}
+                    </Link>
+                  </Alert>
+                ) : null}
+                {check ? <LimitWarningList violations={check.violations} /> : null}
+              </div>
             ) : null}
 
             <Card title={t('orders.infoTitle')} headingLevel={2}>
@@ -313,20 +302,33 @@ export function CheckoutPage() {
                 {formatDate(cartData.pickup_date)} → {formatDate(cartData.return_date)}
                 {duration ? ` · ${t('cart.duration', { n: duration })}` : ''}
               </p>
-              <div className="vl-form-grid vl-form-grid--2" style={{ marginTop: 'var(--sp-4)' }}>
-                <TimeSlotPicker
-                  slots={check?.pickup_slots ?? []}
-                  value={form.pickup_time || cartData.pickup_time}
-                  label={t('cart.pickupTime')}
-                  onChange={(value) => setForm((f) => ({ ...f, pickup_time: value }))}
-                />
-                <TimeSlotPicker
-                  slots={check?.return_slots ?? []}
-                  value={form.return_time || cartData.return_time}
-                  label={t('cart.returnTime')}
-                  onChange={(value) => setForm((f) => ({ ...f, return_time: value }))}
-                />
-              </div>
+              {/* No time selection (owner request D): the lab's window for the
+                  chosen weekday is shown as plain information. */}
+              {check ? (
+                <div className="vl-stack" style={{ gap: 'var(--sp-1)', marginTop: 'var(--sp-3)' }}>
+                  {check.pickup_window ? (
+                    <p className="vl-window-note">
+                      <Icon name="clock" size={14} />
+                      {t('timeWindow.pickupLine', {
+                        date: formatDate(cartData.pickup_date),
+                        window: check.pickup_window,
+                      })}
+                    </p>
+                  ) : null}
+                  {check.return_window ? (
+                    <p className="vl-window-note">
+                      <Icon name="clock" size={14} />
+                      {t('timeWindow.returnLine', {
+                        date: formatDate(cartData.return_date),
+                        window: check.return_window,
+                      })}
+                    </p>
+                  ) : null}
+                  <p className="vl-subtle" style={{ margin: 0 }}>
+                    {t('timeWindow.windowNote')}
+                  </p>
+                </div>
+              ) : null}
             </Card>
 
             {requiredRegulations.length > 0 ? (
@@ -361,7 +363,6 @@ export function CheckoutPage() {
               </Card>
             ) : null}
 
-            {check ? <LimitWarningList violations={check.violations} /> : null}
           </div>
 
           <aside className="vl-cart__aside">
@@ -374,6 +375,28 @@ export function CheckoutPage() {
                   </li>
                 ))}
               </ul>
+              {check?.pickup_window || check?.return_window ? (
+                <div className="vl-stack" style={{ gap: 'var(--sp-1)', marginTop: 'var(--sp-4)' }}>
+                  {check.pickup_window ? (
+                    <p className="vl-window-note">
+                      <Icon name="clock" size={14} />
+                      {t('timeWindow.pickupLine', {
+                        date: formatDate(cartData.pickup_date),
+                        window: check.pickup_window,
+                      })}
+                    </p>
+                  ) : null}
+                  {check.return_window ? (
+                    <p className="vl-window-note">
+                      <Icon name="clock" size={14} />
+                      {t('timeWindow.returnLine', {
+                        date: formatDate(cartData.return_date),
+                        window: check.return_window,
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <div style={{ marginTop: 'var(--sp-5)' }}>
                 <Button
                   type="submit"

@@ -4,8 +4,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { ApiError } from '@/api/client';
 import { usePermission } from '@/auth/AuthProvider';
+import { useLiveCheck } from '@/hooks/useLiveCheck';
 import { useToast } from '@/components/Toast';
-import { DateRangePicker } from '@/components/domain';
+import { AvailabilityBadge, DateRangePicker, RowAvailability } from '@/components/domain';
 import {
   Alert,
   Button,
@@ -20,8 +21,8 @@ import {
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
 import { t } from '@/i18n/it';
-import { todayIso } from '@/lib/format';
-import type { Order, OrderOverbookedProduct, User } from '@/types/api';
+import { formatDate, todayIso } from '@/lib/format';
+import type { Order, OrderOverbookedProduct, SuggestedSubstitute, User } from '@/types/api';
 
 interface ItemRow {
   product_id: number;
@@ -32,8 +33,17 @@ interface ItemRow {
 /**
  * /gestione/ordini/nuovo — staff registers a loan on behalf of a student
  * (`orders.create_manual`): the walk-in at the counter, a phone booking, an
- * after-the-fact correction. Mirrors the admin full-edit panel's look; the
- * availability force override stays admin-only (`orders.edit_full`).
+ * after-the-fact correction.
+ *
+ * Availability is checked LIVE while the operator builds the order (owner
+ * request A + C): every row shows its status for the chosen dates, the picker
+ * itself shows availability so an unavailable product is visibly a bad idea
+ * before it is added, and the submit button is disabled (with the reason) while
+ * conflicts exist — unless an admin flips the force switch.
+ *
+ * Times are NOT chosen by default (owner request D): the lab's weekday window
+ * applies. "Orario personalizzato" reveals per-leg overrides (precise time or
+ * custom range via the optional end field).
  */
 export function StaffOrderCreatePage() {
   const navigate = useNavigate();
@@ -46,8 +56,11 @@ export function StaffOrderCreatePage() {
   const [productSearch, setProductSearch] = useState('');
   const [pickupDate, setPickupDate] = useState<string | null>(todayIso());
   const [returnDate, setReturnDate] = useState<string | null>(todayIso());
+  const [customTimes, setCustomTimes] = useState(false);
   const [pickupTime, setPickupTime] = useState('');
+  const [pickupTimeEnd, setPickupTimeEnd] = useState('');
   const [returnTime, setReturnTime] = useState('');
+  const [returnTimeEnd, setReturnTimeEnd] = useState('');
   const [subject, setSubject] = useState('');
   const [professor, setProfessor] = useState('');
   const [motivation, setMotivation] = useState('');
@@ -57,15 +70,32 @@ export function StaffOrderCreatePage() {
   const [force, setForce] = useState(false);
   const [conflicts, setConflicts] = useState<OrderOverbookedProduct[] | null>(null);
 
+  const hasDates = pickupDate !== null && returnDate !== null;
+
+  /* Live availability (debounced 400 ms, stale responses dropped). */
+  const live = useLiveCheck({ items, pickupDate, returnDate });
+  const liveConflicts = (live.check?.availability ?? []).filter((entry) => !entry.sufficient);
+  const blockedByAvailability = liveConflicts.length > 0 && !(canForce && force);
+
   const userResults = useQuery({
     queryKey: ['manual-user-search', userSearch],
     queryFn: () => api.getUsers({ q: userSearch, per_page: 8 }),
     enabled: userSearch.trim().length >= 2,
   });
 
+  /* When dates are chosen, the picker itself reports availability (request A). */
   const productResults = useQuery({
-    queryKey: ['manual-product-search', productSearch],
-    queryFn: () => api.getProducts({ q: productSearch, per_page: 8 }),
+    queryKey: ['manual-product-search', productSearch, hasDates ? pickupDate : null, hasDates ? returnDate : null],
+    queryFn: () =>
+      hasDates
+        ? api.getAvailableProducts({
+            q: productSearch,
+            start_date: pickupDate,
+            end_date: returnDate,
+            include_unavailable: 'true',
+            per_page: 8,
+          })
+        : api.getProducts({ q: productSearch, per_page: 8 }),
     enabled: productSearch.trim().length >= 2,
   });
 
@@ -90,13 +120,17 @@ export function StaffOrderCreatePage() {
     },
   });
 
-  const valid =
-    selectedUser !== null &&
-    items.length > 0 &&
-    pickupDate !== null &&
-    returnDate !== null &&
-    pickupTime !== '' &&
-    returnTime !== '';
+  const valid = selectedUser !== null && items.length > 0 && hasDates && !blockedByAvailability;
+
+  function swapRow(productId: number, substitute: SuggestedSubstitute) {
+    setItems((prev) =>
+      prev.map((row) =>
+        row.product_id === productId
+          ? { ...row, product_id: substitute.product_id, name: substitute.name }
+          : row,
+      ),
+    );
+  }
 
   function submit() {
     if (!valid || selectedUser === null) return;
@@ -105,8 +139,11 @@ export function StaffOrderCreatePage() {
       items: items.map(({ product_id, quantity }) => ({ product_id, quantity })),
       start_date: pickupDate,
       end_date: returnDate,
-      pickup_time: pickupTime,
-      return_time: returnTime,
+      // No override → null = the lab's weekday window (SPEC v1.4 §5.3).
+      pickup_time: customTimes && pickupTime !== '' ? pickupTime : null,
+      pickup_time_end: customTimes && pickupTime !== '' && pickupTimeEnd !== '' ? pickupTimeEnd : null,
+      return_time: customTimes && returnTime !== '' ? returnTime : null,
+      return_time_end: customTimes && returnTime !== '' && returnTimeEnd !== '' ? returnTimeEnd : null,
       subject: subject.trim() !== '' ? subject.trim() : null,
       professor: professor.trim() !== '' ? professor.trim() : null,
       motivation: motivation.trim() !== '' ? motivation.trim() : null,
@@ -130,24 +167,27 @@ export function StaffOrderCreatePage() {
       </div>
 
       <div className="vl-stack" style={{ maxWidth: 720, gap: 'var(--sp-5)' }}>
+        {/* Problems first (owner request B). */}
         {conflicts !== null ? (
-          <Alert level="danger" icon="alert" title={t('staff.editConflictTitle')}>
-            <ul>
-              {conflicts.map((conflict) => (
-                <li key={conflict.product_id}>
-                  {t('staff.editConflictLine', {
-                    product:
-                      conflict.name ??
-                      items.find((i) => i.product_id === conflict.product_id)?.name ??
-                      `#${conflict.product_id}`,
-                    requested: conflict.requested,
-                    available: conflict.available,
-                  })}
-                </li>
-              ))}
-            </ul>
-            <p style={{ marginTop: 'var(--sp-2)' }}>{t('staff.newOrderConflictHint')}</p>
-          </Alert>
+          <div className="vl-problems">
+            <Alert level="danger" icon="alert" title={t('staff.editConflictTitle')}>
+              <ul>
+                {conflicts.map((conflict) => (
+                  <li key={conflict.product_id}>
+                    {t('staff.editConflictLine', {
+                      product:
+                        conflict.name ??
+                        items.find((i) => i.product_id === conflict.product_id)?.name ??
+                        `#${conflict.product_id}`,
+                      requested: conflict.requested,
+                      available: conflict.available,
+                    })}
+                  </li>
+                ))}
+              </ul>
+              <p style={{ marginTop: 'var(--sp-2)' }}>{t('staff.newOrderConflictHint')}</p>
+            </Alert>
+          </div>
         ) : null}
 
         {/* ------------------------------------------------------- student */}
@@ -195,7 +235,7 @@ export function StaffOrderCreatePage() {
           )}
         </Card>
 
-        {/* ---------------------------------------------------- dates & times */}
+        {/* ---------------------------------------------------- dates & window */}
         <Card title={t('cart.dates')} headingLevel={2}>
           <div className="vl-stack" style={{ gap: 'var(--sp-4)' }}>
             <Field label={t('cart.dates')} htmlFor="manual-dates">
@@ -211,24 +251,76 @@ export function StaffOrderCreatePage() {
                 }}
               />
             </Field>
-            <div className="vl-form-grid vl-form-grid--2">
-              <Field label={t('orders.pickup')} htmlFor="manual-pickup-time">
-                <TextInput
-                  id="manual-pickup-time"
-                  type="time"
-                  value={pickupTime}
-                  onChange={(e) => setPickupTime(e.target.value)}
-                />
-              </Field>
-              <Field label={t('orders.return')} htmlFor="manual-return-time">
-                <TextInput
-                  id="manual-return-time"
-                  type="time"
-                  value={returnTime}
-                  onChange={(e) => setReturnTime(e.target.value)}
-                />
-              </Field>
+
+            {!customTimes && hasDates && live.check ? (
+              <div className="vl-stack" style={{ gap: 'var(--sp-1)' }}>
+                {live.check.pickup_window ? (
+                  <p className="vl-window-note">
+                    <Icon name="clock" size={14} />
+                    {t('timeWindow.pickupLine', {
+                      date: formatDate(pickupDate),
+                      window: live.check.pickup_window,
+                    })}
+                  </p>
+                ) : null}
+                {live.check.return_window ? (
+                  <p className="vl-window-note">
+                    <Icon name="clock" size={14} />
+                    {t('timeWindow.returnLine', {
+                      date: formatDate(returnDate),
+                      window: live.check.return_window,
+                    })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div>
+              <Switch
+                checked={customTimes}
+                onChange={setCustomTimes}
+                label={t('timeWindow.customToggle')}
+              />
+              <p className="vl-subtle" style={{ marginTop: 'var(--sp-1)' }}>
+                {t('timeWindow.customHint')}
+              </p>
             </div>
+            {customTimes ? (
+              <div className="vl-form-grid vl-form-grid--2">
+                <Field label={t('timeWindow.pickupStart')} htmlFor="manual-pickup-time">
+                  <TextInput
+                    id="manual-pickup-time"
+                    type="time"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                  />
+                </Field>
+                <Field label={t('timeWindow.pickupEnd')} htmlFor="manual-pickup-time-end" optional>
+                  <TextInput
+                    id="manual-pickup-time-end"
+                    type="time"
+                    value={pickupTimeEnd}
+                    onChange={(e) => setPickupTimeEnd(e.target.value)}
+                  />
+                </Field>
+                <Field label={t('timeWindow.returnStart')} htmlFor="manual-return-time">
+                  <TextInput
+                    id="manual-return-time"
+                    type="time"
+                    value={returnTime}
+                    onChange={(e) => setReturnTime(e.target.value)}
+                  />
+                </Field>
+                <Field label={t('timeWindow.returnEnd')} htmlFor="manual-return-time-end" optional>
+                  <TextInput
+                    id="manual-return-time-end"
+                    type="time"
+                    value={returnTimeEnd}
+                    onChange={(e) => setReturnTimeEnd(e.target.value)}
+                  />
+                </Field>
+              </div>
+            ) : null}
           </div>
         </Card>
 
@@ -236,28 +328,37 @@ export function StaffOrderCreatePage() {
         <Card title={t('staff.editItems')} headingLevel={2}>
           <div className="vl-stack" style={{ gap: 'var(--sp-3)' }}>
             {items.map((item) => (
-              <div key={item.product_id} className="vl-row" style={{ justifyContent: 'space-between' }}>
-                <span style={{ flex: 1, minWidth: 0 }}>{item.name}</span>
-                <QuantityStepper
-                  value={item.quantity}
-                  onChange={(quantity) =>
-                    setItems((prev) =>
-                      prev.map((row) =>
-                        row.product_id === item.product_id ? { ...row, quantity } : row,
-                      ),
-                    )
-                  }
-                  label={`${t('cart.quantity')} ${item.name}`}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setItems((prev) => prev.filter((row) => row.product_id !== item.product_id))
-                  }
-                >
-                  {t('staff.editRemoveItem')}
-                </Button>
+              <div key={item.product_id} className="vl-stack" style={{ gap: 'var(--sp-1)' }}>
+                <div className="vl-row" style={{ justifyContent: 'space-between' }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>{item.name}</span>
+                  <QuantityStepper
+                    value={item.quantity}
+                    onChange={(quantity) =>
+                      setItems((prev) =>
+                        prev.map((row) =>
+                          row.product_id === item.product_id ? { ...row, quantity } : row,
+                        ),
+                      )
+                    }
+                    label={`${t('cart.quantity')} ${item.name}`}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setItems((prev) => prev.filter((row) => row.product_id !== item.product_id))
+                    }
+                  >
+                    {t('staff.editRemoveItem')}
+                  </Button>
+                </div>
+                {hasDates ? (
+                  <RowAvailability
+                    entry={live.entryFor(item.product_id)}
+                    checking={live.checking}
+                    onSwap={(substitute) => swapRow(item.product_id, substitute)}
+                  />
+                ) : null}
               </div>
             ))}
             {items.length === 0 ? <p className="vl-subtle">{t('staff.editNoItems')}</p> : null}
@@ -272,18 +373,22 @@ export function StaffOrderCreatePage() {
                 {(productResults.data?.data ?? [])
                   .filter((p) => !items.some((row) => row.product_id === p.id))
                   .map((p) => (
-                    <Button
-                      key={p.id}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setItems((prev) => [...prev, { product_id: p.id, name: p.name, quantity: 1 }]);
-                        setProductSearch('');
-                      }}
-                    >
-                      <Icon name="plus" size={14} />
-                      {p.name}
-                    </Button>
+                    <div key={p.id} className="vl-row" style={{ gap: 'var(--sp-2)' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setItems((prev) => [...prev, { product_id: p.id, name: p.name, quantity: 1 }]);
+                          setProductSearch('');
+                        }}
+                      >
+                        <Icon name="plus" size={14} />
+                        {p.name}
+                      </Button>
+                      {hasDates ? (
+                        <AvailabilityBadge available={p.available_quantity} capacity={p.capacity} />
+                      ) : null}
+                    </div>
                   ))}
               </div>
             ) : null}
@@ -342,7 +447,7 @@ export function StaffOrderCreatePage() {
                 <option value="pending">{t('staff.newOrderStatusPending')}</option>
               </Select>
             </Field>
-            {canForce ? (
+            {canForce && (liveConflicts.length > 0 || conflicts !== null) ? (
               <div>
                 <Switch checked={force} onChange={setForce} label={t('staff.newOrderForce')} />
                 {force ? (
@@ -355,13 +460,20 @@ export function StaffOrderCreatePage() {
           </div>
         </Card>
 
-        <div className="vl-row" style={{ justifyContent: 'flex-end' }}>
-          <Link to="/gestione/ordini" className="vl-btn vl-btn--ghost">
-            {t('app.cancel')}
-          </Link>
-          <Button variant="primary" disabled={!valid} loading={create.isPending} onClick={submit}>
-            {t('staff.newOrderCreate')}
-          </Button>
+        <div className="vl-stack" style={{ gap: 'var(--sp-2)', alignItems: 'flex-end' }}>
+          <div className="vl-row">
+            <Link to="/gestione/ordini" className="vl-btn vl-btn--ghost">
+              {t('app.cancel')}
+            </Link>
+            <Button variant="primary" disabled={!valid} loading={create.isPending} onClick={submit}>
+              {t('staff.newOrderCreate')}
+            </Button>
+          </div>
+          {blockedByAvailability ? (
+            <p className="vl-field__error" role="alert" style={{ margin: 0 }}>
+              {t('liveCheck.conflictsBlock')}
+            </p>
+          ) : null}
         </div>
       </div>
     </>

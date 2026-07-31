@@ -131,13 +131,16 @@ final class CartController extends Controller
         $check = null;
         if ($hasRange) {
             $normalized = $this->orders->cartItemsNormalized($cart);
+            // Times are ignored on the student path (SPEC v1.4 §5.3): the
+            // order will use the lab's weekday window, so stale cart times
+            // must not pollute the pre-flight check.
             $check = $this->orders->availabilityCheck(
                 $user,
                 $normalized,
                 $pickupDate,
-                $cart->pickup_time,
+                null,
                 $returnDate,
-                $cart->return_time
+                null
             );
         }
 

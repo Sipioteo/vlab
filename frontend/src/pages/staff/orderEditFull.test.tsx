@@ -38,18 +38,30 @@ function find(method: string, path: string) {
 }
 
 describe('StaffOrderDetailPage — admin full edit', () => {
-  it('shows the edit affordance to admins only', async () => {
+  it('shows ONE edit affordance: admins always, staff when `edit` is allowed', async () => {
     const view = renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'admin' });
     await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
-    expect(screen.getByRole('button', { name: 'Modifica prestito' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Modifica' })).toBeVisible();
     view.unmount();
 
-    for (const role of ['technician', 'assistant'] as const) {
-      const v = renderWithProviders(<App />, { route: '/gestione/ordini/89', role });
-      await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
-      expect(screen.queryByRole('button', { name: 'Modifica prestito' })).toBeNull();
-      v.unmount();
-    }
+    // Technician: the same single surface, driven by allowed_actions.
+    const v2 = renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'technician' });
+    await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
+    expect(screen.getByRole('button', { name: 'Modifica' })).toBeVisible();
+    // The old duplicated note dialog is gone for good.
+    expect(screen.queryByRole('button', { name: 'Aggiungi nota' })).toBeNull();
+    v2.unmount();
+
+    // No `edit` in allowed_actions and no edit_full → no edit affordance.
+    server.use(
+      http.get('/api/v1/orders/:id', () =>
+        HttpResponse.json(f.makeStaffOrder({ allowed_actions: ['approve', 'reject', 'cancel'] })),
+      ),
+    );
+    const v3 = renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'technician' });
+    await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
+    expect(screen.queryByRole('button', { name: 'Modifica' })).toBeNull();
+    v3.unmount();
   });
 
   it('opens the panel prefilled and PUTs the edited payload', async () => {
@@ -62,7 +74,7 @@ describe('StaffOrderDetailPage — admin full edit', () => {
     renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'admin' });
 
     await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
-    await user.click(screen.getByRole('button', { name: 'Modifica prestito' }));
+    await user.click(screen.getByRole('button', { name: 'Modifica' }));
 
     const dialog = await screen.findByRole('dialog');
     const subject = within(dialog).getByLabelText('Materia');
@@ -123,7 +135,7 @@ describe('StaffOrderDetailPage — admin full edit', () => {
     renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'admin' });
 
     await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Modifica prestito' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Modifica' }));
 
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Salva' }));

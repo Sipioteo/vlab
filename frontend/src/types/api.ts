@@ -294,9 +294,22 @@ export interface OrderSummary {
   status_label: string;
   user: UserRef;
   pickup_date: string | null;
+  /**
+   * Time-window model (SPEC v1.4 §5.3): null = the lab's window for that
+   * weekday; a time alone = precise staff override; time + `*_time_end` =
+   * custom range override.
+   */
   pickup_time: string | null;
+  pickup_time_end: string | null;
   return_date: string | null;
   return_time: string | null;
+  return_time_end: string | null;
+  /**
+   * Server-computed display strings (§7.4): "09:00–12:30" (window or range)
+   * or "10:15" (precise). The frontend never recomputes settings math.
+   */
+  pickup_window: string | null;
+  return_window: string | null;
   items_count: number;
   distinct_products: number;
   exceeds_limits: boolean;
@@ -537,6 +550,9 @@ export interface AvailabilityCheckResponse {
   required_regulations: OrderRequiredRegulation[];
   pickup_slots: TimeSlot[];
   return_slots: TimeSlot[];
+  /** Lab window display strings for the chosen days (SPEC v1.4 §5.3). */
+  pickup_window?: string | null;
+  return_window?: string | null;
   quota: {
     orders_this_month: number;
     max_orders_per_month: number | null;

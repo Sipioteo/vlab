@@ -48,7 +48,7 @@ final class InfraTest extends TestCase
         $this->assertSame('fake', $payload['ldap_mode']);
         $this->assertTrue($payload['database']['connected']);
         $this->assertSame('sqlite', $payload['database']['driver']);
-        $this->assertSame(21, $payload['database']['migrations_applied']);
+        $this->assertSame(22, $payload['database']['migrations_applied']);
         $this->assertSame('Europe/Rome', $payload['timezone']);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $payload['server_time']);
     }
@@ -88,14 +88,14 @@ final class InfraTest extends TestCase
         $migrator = new Migrator();
         // Re-running migrate is a no-op.
         $this->assertSame([], $migrator->migrate());
-        $this->assertSame(21, $migrator->appliedCount());
+        $this->assertSame(22, $migrator->appliedCount());
         // fresh drops and recreates everything.
         $ran = $migrator->fresh();
-        $this->assertCount(21, $ran);
-        $this->assertSame(21, $migrator->appliedCount());
+        $this->assertCount(22, $ran);
+        $this->assertSame(22, $migrator->appliedCount());
         // And again.
         $ran = $migrator->fresh();
-        $this->assertCount(21, $ran);
+        $this->assertCount(22, $ran);
     }
 
     public function testCollectionEnvelopeAndPaginationClamping(): void

@@ -115,7 +115,13 @@ class OrderStateMachine
         }
         $hours = (int) ($this->settings->get('booking.cancellation_deadline_hours', 24) ?? 24);
         $tz = new DateTimeZone($this->calendar->timezone());
-        $time = $order->pickup_time !== null ? (string) $order->pickup_time : '00:00';
+        // NULL time = the lab's weekday window (SPEC v1.4 §5.3): the deadline
+        // counts back from the window's start, not from midnight.
+        $time = $order->pickup_time !== null ? (string) $order->pickup_time : null;
+        if ($time === null) {
+            $ranges = $this->calendar->windowRanges((string) Dates::datePart($order->pickup_date), 'pickup');
+            $time = $ranges[0]['from'] ?? '00:00';
+        }
         $pickupAt = new DateTimeImmutable(Dates::datePart($order->pickup_date) . ' ' . $time, $tz);
         $deadline = $pickupAt->modify("-{$hours} hours");
         return Dates::nowUtc() < $deadline;

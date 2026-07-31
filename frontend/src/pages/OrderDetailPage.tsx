@@ -103,7 +103,7 @@ export function OrderDetailPage() {
           <Alert level="success" icon="check" title={t('orders.confirmedTitle')}>
             {t('orders.confirmedBody', {
               date: formatDate(order.pickup_date),
-              time: order.pickup_time ?? '',
+              time: order.pickup_window ?? '',
             })}
           </Alert>
         </div>
@@ -115,11 +115,17 @@ export function OrderDetailPage() {
         </div>
       ) : null}
 
-      {order.rejection_reason ? (
-        <div style={{ marginBottom: 'var(--sp-5)' }}>
-          <Alert level="danger" icon="alert" title={t('orders.rejectionReason')}>
-            {order.rejection_reason}
-          </Alert>
+      {/* Problems FIRST (owner request B). */}
+      {order.rejection_reason !== null || order.limit_violations.length > 0 ? (
+        <div className="vl-problems" style={{ marginBottom: 'var(--sp-5)' }}>
+          {order.rejection_reason ? (
+            <Alert level="danger" icon="alert" title={t('orders.rejectionReason')}>
+              {order.rejection_reason}
+            </Alert>
+          ) : null}
+          {order.limit_violations.length > 0 ? (
+            <LimitWarningList violations={order.limit_violations} />
+          ) : null}
         </div>
       ) : null}
 
@@ -176,9 +182,6 @@ export function OrderDetailPage() {
             </dl>
           </Card>
 
-          {order.limit_violations.length > 0 ? (
-            <LimitWarningList violations={order.limit_violations} />
-          ) : null}
         </div>
 
         <div className="vl-stack">
@@ -187,13 +190,15 @@ export function OrderDetailPage() {
               <div className="vl-row" style={{ justifyContent: 'space-between' }}>
                 <dt className="vl-subtle">{t('orders.pickup')}</dt>
                 <dd style={{ margin: 0 }}>
-                  {formatDate(order.pickup_date)} {order.pickup_time ?? ''}
+                  {formatDate(order.pickup_date)}
+                  {order.pickup_window ? ` · ${order.pickup_window}` : ''}
                 </dd>
               </div>
               <div className="vl-row" style={{ justifyContent: 'space-between' }}>
                 <dt className="vl-subtle">{t('orders.return')}</dt>
                 <dd style={{ margin: 0 }}>
-                  {formatDate(order.return_date)} {order.return_time ?? ''}
+                  {formatDate(order.return_date)}
+                  {order.return_window ? ` · ${order.return_window}` : ''}
                 </dd>
               </div>
               {order.picked_up_at ? (

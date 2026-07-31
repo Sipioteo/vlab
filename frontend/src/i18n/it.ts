@@ -390,6 +390,10 @@ export const it = {
     noShowTitle: 'Segnare come non ritirata?',
     notesTitle: 'Note interne',
     comment: 'Commento',
+    moreActions: 'Altro',
+    cancelOrderTitle: 'Annullare la richiesta {code}?',
+    cancelOrderBody: 'La richiesta viene annullata e le attrezzature tornano disponibili.',
+    noShowBody: 'Lo studente non si è presentato al ritiro: la richiesta viene chiusa come "non ritirata".',
     editOrder: 'Modifica prestito',
     editOrderTitle: 'Modifica del prestito {code}',
     editOrderLead:
@@ -663,6 +667,29 @@ export const it = {
   orderForm: {
     print: 'Stampa il modulo di ritiro',
     hint: 'Modulo PDF da firmare al ritiro e alla riconsegna.',
+  },
+
+  /* Live availability pre-flight (owner request A + C). */
+  liveCheck: {
+    checking: 'Verifica disponibilità…',
+    available: 'Disponibile',
+    partial: 'Solo {available} disponibili su {requested} richiesti',
+    trySubstitute: 'In alternativa:',
+    conflictsBlock: 'Alcune attrezzature non sono disponibili nelle date scelte: risolvi i conflitti qui sopra o forza da amministratore.',
+  },
+
+  /* Time-window model (owner request D). */
+  timeWindow: {
+    pickupLine: 'Ritiro: {date} · {window}',
+    returnLine: 'Riconsegna: {date} · {window}',
+    windowNote: 'Ci si presenta in laboratorio nella fascia oraria indicata.',
+    customToggle: 'Orario personalizzato',
+    customHint: 'Senza orario personalizzato vale la fascia del laboratorio per quel giorno.',
+    pickupStart: 'Ritiro — orario',
+    pickupEnd: 'Ritiro — fine fascia (opzionale)',
+    returnStart: 'Riconsegna — orario',
+    returnEnd: 'Riconsegna — fine fascia (opzionale)',
+    labWindow: 'Fascia del laboratorio',
   },
 } as const;
 

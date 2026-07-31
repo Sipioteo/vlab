@@ -123,13 +123,16 @@ describe('CartPage', () => {
     });
   });
 
-  it('renders the time slots returned by the availability check', async () => {
+  it('shows the lab time windows as information — no time picker (owner request D)', async () => {
     renderWithProviders(<App />, { route: '/carrello', role: 'student' });
     await screen.findByText('Visore VR Meta Quest 3 128GB');
 
-    expect(await screen.findByRole('button', { name: '09:00–09:30' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '15:30–16:00' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '11:00–11:30' })).toBeNull();
+    // The weekday windows from the availability check, as plain text…
+    expect(await screen.findByText(/Ritiro: .*09:00–12:30/)).toBeVisible();
+    expect(screen.getByText(/Riconsegna: .*14:00–17:00/)).toBeVisible();
+    // …and no slot buttons anywhere.
+    expect(screen.queryByRole('button', { name: '09:00–09:30' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '15:30–16:00' })).toBeNull();
   });
 
   it('shows the empty state when the cart has no items', async () => {

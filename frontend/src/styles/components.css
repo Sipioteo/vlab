@@ -1865,3 +1865,109 @@
   border-bottom-color: var(--color-accent);
   font-weight: var(--fw-semibold);
 }
+
+/* ------------------------------------------------- overflow menu ("Altro ▾") */
+
+.vl-menu {
+  position: relative;
+  display: inline-block;
+}
+.vl-menu__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 220px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.14));
+  padding: var(--sp-1) 0;
+  z-index: 130;
+  animation: vl-menu-in 120ms ease-out;
+}
+@keyframes vl-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.vl-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vl-menu__item:hover,
+.vl-menu__item:focus-visible {
+  background: var(--color-surface-sunken);
+}
+.vl-menu__item--danger {
+  color: var(--color-danger);
+}
+
+/* ------------------------------------- live per-row availability (request A) */
+
+.vl-rowavail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 24px; /* reserved: no layout jump when the status pops in */
+}
+.vl-rowavail__subs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--color-ink-subtle);
+}
+
+/* -------------------------------- problems-on-top container (owner request B) */
+
+.vl-problems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.vl-problems > * {
+  animation: vl-problem-in 160ms ease-out;
+}
+@keyframes vl-problem-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.vl-problems--sticky {
+  position: sticky;
+  top: var(--sp-3);
+  z-index: 90;
+}
+
+/* Informative time-window line ("Ritiro: lun 4 ago · 09:00–12:30") */
+.vl-window-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--color-ink-subtle);
+  margin: 0;
+}

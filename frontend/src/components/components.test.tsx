@@ -9,8 +9,8 @@ import {
   AvailabilityBadge,
   DateRangePicker,
   MarkdownView,
+  RowAvailability,
   StatusBadge,
-  TimeSlotPicker,
 } from './domain';
 import { metaEnums } from '@/test/fixtures';
 import type { OrderStatus, Role } from '@/types/api';
@@ -236,28 +236,49 @@ describe('DateRangePicker', () => {
   });
 });
 
-describe('TimeSlotPicker', () => {
-  it('renders only the provided slots and marks the selected one', () => {
+describe('RowAvailability', () => {
+  it('renders the three live states: green / amber / red', () => {
+    const { rerender } = render(
+      <RowAvailability entry={{ product_id: 1, requested: 1, available: 3, sufficient: true }} />,
+    );
+    expect(screen.getByTestId('row-availability-ok')).toHaveTextContent('Disponibile');
+
+    rerender(
+      <RowAvailability entry={{ product_id: 1, requested: 3, available: 1, sufficient: false }} />,
+    );
+    expect(screen.getByTestId('row-availability-partial')).toHaveTextContent(
+      'Solo 1 disponibili su 3 richiesti',
+    );
+
+    rerender(
+      <RowAvailability entry={{ product_id: 1, requested: 1, available: 0, sufficient: false }} />,
+    );
+    expect(screen.getByTestId('row-availability-ko')).toHaveTextContent(
+      'Non disponibile in queste date',
+    );
+  });
+
+  it('offers row-level substitutes through the onSwap callback', async () => {
+    const user = userEvent.setup();
+    const onSwap = vi.fn();
     render(
-      <TimeSlotPicker
-        slots={[
-          { start: '09:00', end: '09:30' },
-          { start: '09:30', end: '10:00' },
-        ]}
-        value="09:30"
-        onChange={() => {}}
-        label="Ora di ritiro"
+      <RowAvailability
+        entry={{
+          product_id: 1,
+          requested: 1,
+          available: 0,
+          sufficient: false,
+          suggested_substitutes: [
+            { product_id: 9, name: 'Alternativa X', slug: 'alt-x', image_url: null, available_quantity: 2, priority: 1 },
+          ],
+        }}
+        onSwap={onSwap}
       />,
     );
-    expect(screen.getByRole('button', { name: '09:00–09:30' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
+    await user.click(screen.getByRole('button', { name: /Alternativa X/ }));
+    expect(onSwap).toHaveBeenCalledWith(
+      expect.objectContaining({ product_id: 9, name: 'Alternativa X' }),
     );
-    expect(screen.getByRole('button', { name: '09:30–10:00' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    expect(screen.queryByRole('button', { name: '10:00–10:30' })).toBeNull();
   });
 });
 

@@ -384,6 +384,10 @@ class OrderService
             'required_regulations' => $requiredOut,
             'pickup_slots' => $pickupDate !== null ? $this->calendar->pickupSlots($pickupDate) : [],
             'return_slots' => $returnDate !== null ? $this->calendar->returnSlots($returnDate) : [],
+            // Display strings for the lab's default windows on the chosen days
+            // (SPEC v1.4 §5.3): the frontend never recomputes settings math.
+            'pickup_window' => $pickupDate !== null ? $this->calendar->windowLabel($pickupDate, 'pickup') : null,
+            'return_window' => $returnDate !== null ? $this->calendar->windowLabel($returnDate, 'return') : null,
             'quota' => $quota,
         ];
     }
@@ -514,21 +518,18 @@ class OrderService
 
         $errors = [];
         $pickupDate = isset($payload['pickup_date']) ? (string) $payload['pickup_date'] : null;
-        $pickupTime = isset($payload['pickup_time']) ? (string) $payload['pickup_time'] : null;
         $returnDate = isset($payload['return_date']) ? (string) $payload['return_date'] : null;
-        $returnTime = isset($payload['return_time']) ? (string) $payload['return_time'] : null;
+        // Time-window model (SPEC v1.4 §5.3): students never choose times.
+        // `pickup_time`/`return_time` in the checkout payload are TOLERATED for
+        // backward compatibility but IGNORED — the order is stored with NULL
+        // times, meaning "the lab's window for that weekday". Only staff paths
+        // (manual create, admin edit) may set explicit overrides.
 
         if ($pickupDate === null || !Dates::isValidDate($pickupDate)) {
             $errors['pickup_date'] = ['Il campo pickup_date è obbligatorio.'];
         }
-        if ($pickupTime === null || !Dates::isValidTime($pickupTime)) {
-            $errors['pickup_time'] = ['Il campo pickup_time è obbligatorio.'];
-        }
         if ($returnDate === null || !Dates::isValidDate($returnDate)) {
             $errors['return_date'] = ['Il campo return_date è obbligatorio.'];
-        }
-        if ($returnTime === null || !Dates::isValidTime($returnTime)) {
-            $errors['return_time'] = ['Il campo return_time è obbligatorio.'];
         }
         if ($pickupDate !== null && $returnDate !== null && Dates::isValidDate($pickupDate) && Dates::isValidDate($returnDate) && $returnDate < $pickupDate) {
             $errors['return_date'] = ['La data di riconsegna deve essere successiva o uguale al ritiro.'];
@@ -611,7 +612,7 @@ class OrderService
         $notes = isset($payload['notes']) && $payload['notes'] !== null ? mb_substr((string) $payload['notes'], 0, 2000) : null;
 
         return Capsule::connection()->transaction(function () use (
-            $user, $items, $cart, $fromCart, $pickupDate, $pickupTime, $returnDate, $returnTime,
+            $user, $items, $cart, $fromCart, $pickupDate, $returnDate,
             $subject, $motivation, $professor, $notes, $acknowledge, $toAccept, $ip, $userAgent
         ) {
             $this->lockForAvailability();
@@ -621,9 +622,9 @@ class OrderService
                 $user,
                 $items,
                 $pickupDate,
-                $pickupTime,
+                null,
                 $returnDate,
-                $returnTime,
+                null,
                 $cart?->id,
                 $availabilityByProduct
             );
@@ -676,9 +677,11 @@ class OrderService
             $order->code = $code;
             $order->year_sequence = $sequence;
             $order->pickup_date = $pickupDate;
-            $order->pickup_time = $pickupTime;
+            $order->pickup_time = null;
+            $order->pickup_time_end = null;
             $order->return_date = $returnDate;
-            $order->return_time = $returnTime;
+            $order->return_time = null;
+            $order->return_time_end = null;
             $order->subject = $subject !== '' ? $subject : null;
             $order->motivation = $motivation !== '' ? $motivation : null;
             $order->professor = $professor !== '' ? $professor : null;
@@ -753,20 +756,24 @@ class OrderService
             : (isset($payload['pickup_date']) ? (string) $payload['pickup_date'] : null);
         $returnDate = isset($payload['end_date']) ? (string) $payload['end_date']
             : (isset($payload['return_date']) ? (string) $payload['return_date'] : null);
-        $pickupTime = isset($payload['pickup_time']) ? (string) $payload['pickup_time'] : null;
-        $returnTime = isset($payload['return_time']) ? (string) $payload['return_time'] : null;
+        // Times are OPTIONAL overrides (SPEC v1.4 §5.3): NULL = the lab's
+        // window for that weekday; time alone = precise appointment; time +
+        // *_time_end = custom range. Staff-provided times are honored.
+        $times = [];
+        foreach (['pickup_time', 'pickup_time_end', 'return_time', 'return_time_end'] as $f) {
+            $value = isset($payload[$f]) && $payload[$f] !== '' ? $payload[$f] : null;
+            if ($value !== null && !Dates::isValidTime((string) $value)) {
+                $errors[$f] = ['Formato orario non valido (HH:MM).'];
+                $value = null;
+            }
+            $times[$f] = $value !== null ? (string) $value : null;
+        }
 
         if ($pickupDate === null || !Dates::isValidDate($pickupDate)) {
             $errors['start_date'] = ['Il campo start_date è obbligatorio (YYYY-MM-DD).'];
         }
         if ($returnDate === null || !Dates::isValidDate($returnDate)) {
             $errors['end_date'] = ['Il campo end_date è obbligatorio (YYYY-MM-DD).'];
-        }
-        if ($pickupTime === null || !Dates::isValidTime($pickupTime)) {
-            $errors['pickup_time'] = ['Il campo pickup_time è obbligatorio (HH:MM).'];
-        }
-        if ($returnTime === null || !Dates::isValidTime($returnTime)) {
-            $errors['return_time'] = ['Il campo return_time è obbligatorio (HH:MM).'];
         }
         if ($pickupDate !== null && $returnDate !== null
             && Dates::isValidDate($pickupDate) && Dates::isValidDate($returnDate)
@@ -795,6 +802,7 @@ class OrderService
         if ($errors !== []) {
             throw ApiException::validation($errors);
         }
+        $this->assertTimeOverrides($pickupDate, $returnDate, $times, $force);
 
         $optional = [];
         foreach (['subject', 'professor', 'motivation', 'notes', 'staff_notes'] as $f) {
@@ -805,7 +813,7 @@ class OrderService
         $comment = isset($payload['comment']) && $payload['comment'] !== null ? (string) $payload['comment'] : null;
 
         return Capsule::connection()->transaction(function () use (
-            $actor, $target, $items, $pickupDate, $pickupTime, $returnDate, $returnTime,
+            $actor, $target, $items, $pickupDate, $returnDate, $times,
             $optional, $initialStatus, $force, $comment
         ) {
             $this->lockForAvailability();
@@ -840,9 +848,9 @@ class OrderService
                 $target,
                 $items,
                 $pickupDate,
-                $pickupTime,
+                $times['pickup_time'],
                 $returnDate,
-                $returnTime,
+                $times['return_time'],
                 null,
                 $availabilityByProduct
             );
@@ -854,9 +862,11 @@ class OrderService
                 'code' => $code,
                 'year_sequence' => $sequence,
                 'pickup_date' => $pickupDate,
-                'pickup_time' => $pickupTime,
+                'pickup_time' => $times['pickup_time'],
+                'pickup_time_end' => $times['pickup_time_end'],
                 'return_date' => $returnDate,
-                'return_time' => $returnTime,
+                'return_time' => $times['return_time'],
+                'return_time_end' => $times['return_time_end'],
                 'subject' => $optional['subject'],
                 'motivation' => $optional['motivation'],
                 'professor' => $optional['professor'],
@@ -1271,17 +1281,40 @@ class OrderService
                     }
                 }
             }
-            foreach (['pickup_time', 'return_time'] as $f) {
-                if (array_key_exists($f, $payload) && $payload[$f] !== null) {
-                    if (!Dates::isValidTime((string) $payload[$f])) {
+            // Explicit null clears an override → back to the lab's weekday window.
+            foreach (['pickup_time', 'pickup_time_end', 'return_time', 'return_time_end'] as $f) {
+                if (array_key_exists($f, $payload)) {
+                    $value = $payload[$f] !== null && $payload[$f] !== '' ? (string) $payload[$f] : null;
+                    if ($value !== null && !Dates::isValidTime($value)) {
                         throw ApiException::validation([$f => ['Formato orario non valido.']]);
                     }
-                    if ((string) $payload[$f] !== (string) $order->{$f}) {
-                        $changes[$f] = ['before' => $order->{$f}, 'after' => $payload[$f]];
-                        $order->{$f} = (string) $payload[$f];
+                    if ($value !== ($order->{$f} !== null ? (string) $order->{$f} : null)) {
+                        $changes[$f] = ['before' => $order->{$f}, 'after' => $value];
+                        $order->{$f} = $value;
                     }
                 }
             }
+            if ($order->pickup_time === null) {
+                $order->pickup_time_end = null;
+            }
+            if ($order->return_time === null) {
+                $order->return_time_end = null;
+            }
+            $this->assertTimeOverrides(
+                Dates::datePart($order->pickup_date),
+                Dates::datePart($order->return_date),
+                [
+                    'pickup_time' => $order->pickup_time,
+                    'pickup_time_end' => $order->pickup_time_end,
+                    'return_time' => $order->return_time,
+                    'return_time_end' => $order->return_time_end,
+                ],
+                false,
+                [
+                    'pickup' => array_key_exists('pickup_time', $payload) || array_key_exists('pickup_time_end', $payload) || array_key_exists('pickup_date', $payload),
+                    'return' => array_key_exists('return_time', $payload) || array_key_exists('return_time_end', $payload) || array_key_exists('return_date', $payload),
+                ]
+            );
             foreach (['subject', 'professor', 'staff_notes'] as $f) {
                 if (array_key_exists($f, $payload)) {
                     $value = $payload[$f] !== null ? (string) $payload[$f] : null;
@@ -1395,17 +1428,45 @@ class OrderService
             if (Dates::datePart($order->return_date) < Dates::datePart($order->pickup_date)) {
                 throw ApiException::validation(['return_date' => ['La data di riconsegna deve essere successiva o uguale al ritiro.']]);
             }
-            foreach (['pickup_time', 'return_time'] as $f) {
-                if (array_key_exists($f, $payload) && $payload[$f] !== null) {
-                    if (!Dates::isValidTime((string) $payload[$f])) {
+            // Time-window model (SPEC v1.4 §5.3): explicit null CLEARS an
+            // override (back to the lab's weekday window); a time sets a
+            // precise override; time + *_time_end sets a custom range.
+            foreach (['pickup_time', 'pickup_time_end', 'return_time', 'return_time_end'] as $f) {
+                if (array_key_exists($f, $payload)) {
+                    $value = $payload[$f] !== null && $payload[$f] !== '' ? (string) $payload[$f] : null;
+                    if ($value !== null && !Dates::isValidTime($value)) {
                         throw ApiException::validation([$f => ['Formato orario non valido (HH:MM).']]);
                     }
-                    if ((string) $payload[$f] !== (string) $order->{$f}) {
-                        $changes[$f] = ['before' => $order->{$f}, 'after' => (string) $payload[$f]];
-                        $order->{$f} = (string) $payload[$f];
+                    if ($value !== ($order->{$f} !== null ? (string) $order->{$f} : null)) {
+                        $changes[$f] = ['before' => $order->{$f}, 'after' => $value];
+                        $order->{$f} = $value;
                     }
                 }
             }
+            // Clearing a start drops its end too — a dangling end is meaningless.
+            if ($order->pickup_time === null && $order->pickup_time_end !== null) {
+                $changes['pickup_time_end'] = ['before' => $order->pickup_time_end, 'after' => null];
+                $order->pickup_time_end = null;
+            }
+            if ($order->return_time === null && $order->return_time_end !== null) {
+                $changes['return_time_end'] = ['before' => $order->return_time_end, 'after' => null];
+                $order->return_time_end = null;
+            }
+            $this->assertTimeOverrides(
+                Dates::datePart($order->pickup_date),
+                Dates::datePart($order->return_date),
+                [
+                    'pickup_time' => $order->pickup_time,
+                    'pickup_time_end' => $order->pickup_time_end,
+                    'return_time' => $order->return_time,
+                    'return_time_end' => $order->return_time_end,
+                ],
+                $force,
+                [
+                    'pickup' => array_key_exists('pickup_time', $payload) || array_key_exists('pickup_time_end', $payload) || array_key_exists('pickup_date', $payload),
+                    'return' => array_key_exists('return_time', $payload) || array_key_exists('return_time_end', $payload) || array_key_exists('return_date', $payload),
+                ]
+            );
 
             if (!$datesOnly) {
                 foreach (['subject', 'professor', 'motivation', 'notes', 'staff_notes'] as $f) {
@@ -1539,6 +1600,62 @@ class OrderService
             $this->writeEvent($order, (string) $order->status, (string) $order->status, 'note', $actor, $comment, null);
         }
         return $order->refresh();
+    }
+
+    /**
+     * Error prevention on explicit time overrides (SPEC v1.4 §5.3): an end
+     * needs a start, a range must be ordered, and the override must fall
+     * within the day's opening hours (`hours.weekly`). `force: true` (admin)
+     * downgrades the opening-hours bound from block to "the lab knows better".
+     *
+     * A leg whose day is closed in `hours.weekly` is NOT time-bounded here:
+     * the date-level warnings (`date_not_bookable`, never blocking staff)
+     * already cover it, and refusing the time while accepting the date would
+     * be incoherent.
+     *
+     * @param array{pickup_time:?string,pickup_time_end:?string,return_time:?string,return_time_end:?string} $times
+     * @param array{pickup:bool,return:bool}|null $legsToCheck legs actually
+     *        touched by this request; untouched legs (e.g. items-only edits on
+     *        an order with pre-existing odd times) are never re-validated.
+     */
+    private function assertTimeOverrides(
+        ?string $pickupDate,
+        ?string $returnDate,
+        array $times,
+        bool $force,
+        ?array $legsToCheck = null
+    ): void {
+        $errors = [];
+        $legs = [
+            ['pickup', $times['pickup_time'], $times['pickup_time_end'], $pickupDate],
+            ['return', $times['return_time'], $times['return_time_end'], $returnDate],
+        ];
+        foreach ($legs as [$kind, $time, $end, $date]) {
+            if ($legsToCheck !== null && !($legsToCheck[$kind] ?? true)) {
+                continue;
+            }
+            $field = $kind . '_time';
+            if ($end !== null && $time === null) {
+                $errors[$field . '_end'] = ['Indica anche l\'orario di inizio della fascia.'];
+                continue;
+            }
+            if ($time === null) {
+                continue;
+            }
+            if ($end !== null && $end <= $time) {
+                $errors[$field . '_end'] = ['La fine della fascia deve essere successiva all\'inizio.'];
+            }
+            if (!$force && $date !== null && Dates::isValidDate($date)) {
+                $opening = $this->calendar->openingFor($date);
+                $latest = $end ?? $time;
+                if ($opening !== null && ($time < $opening['open'] || $latest > $opening['close'])) {
+                    $errors[$field] = ["L'orario deve rientrare nell'apertura del giorno ({$opening['open']}–{$opening['close']})."];
+                }
+            }
+        }
+        if ($errors !== []) {
+            throw ApiException::validation($errors);
+        }
     }
 
     /** 409 insufficient_availability if this order's own demand no longer fits. */

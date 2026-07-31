@@ -643,3 +643,105 @@ export function Tabs({
     </div>
   );
 }
+
+/* ---------------------------------------------------------------- MenuButton */
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  icon?: IconName;
+  danger?: boolean;
+  onSelect: () => void;
+}
+
+/**
+ * Overflow "Altro ▾" menu (owner request E): destructive/secondary actions
+ * live here so the actions bar keeps ONE primary CTA. Closes on outside
+ * click, Escape, or selection; arrow keys move focus between items.
+ */
+export function MenuButton({
+  label,
+  items,
+  size = 'md',
+}: {
+  label: string;
+  items: MenuItem[];
+  size?: 'sm' | 'md';
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const buttons = Array.from(
+          listRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [],
+        );
+        if (buttons.length === 0) return;
+        event.preventDefault();
+        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        const next =
+          event.key === 'ArrowDown'
+            ? buttons[(index + 1) % buttons.length]
+            : buttons[(index - 1 + buttons.length) % buttons.length];
+        next?.focus();
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      listRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    }
+  }, [open]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="vl-menu" ref={rootRef}>
+      <Button
+        size={size}
+        variant="ghost"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label}
+        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={14} />
+      </Button>
+      {open ? (
+        <div className="vl-menu__list" role="menu" id={menuId} aria-label={label} ref={listRef}>
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className={`vl-menu__item${item.danger ? ' vl-menu__item--danger' : ''}`}
+              onClick={() => {
+                setOpen(false);
+                item.onSelect();
+              }}
+            >
+              {item.icon ? <Icon name={item.icon} size={15} /> : null}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}

@@ -79,9 +79,14 @@ final class DemoOrdersSeeder
                 'user_id' => $student->id,
                 'status' => $status,
                 'pickup_date' => $pickup,
-                'pickup_time' => '09:30',
+                // Time-window model (SPEC v1.4 §5.3): NULL = the lab's weekday
+                // window. One order in three carries an explicit staff override
+                // so both paths show up in the demo data.
+                'pickup_time' => $i % 3 === 0 ? '10:15' : null,
+                'pickup_time_end' => $i % 6 === 0 ? '11:00' : null,
                 'return_date' => $return,
-                'return_time' => '14:00',
+                'return_time' => null,
+                'return_time_end' => null,
                 'subject' => 'Demo: Laboratorio di Ripresa e Montaggio',
                 'motivation' => 'Riprese di esercitazione per il corso (dati dimostrativi).',
                 'submitted_at' => $submitted . ' 10:00:00',

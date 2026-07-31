@@ -1,5 +1,5 @@
 # Visionary Lab — Equipment Loan Platform
-## Complete Technical Specification (v1.3, binding)
+## Complete Technical Specification (v1.4, binding)
 
 **Status:** FROZEN CONTRACT. Backend and frontend teams implement in parallel against this document.
 **Scope:** full rewrite/modernization of `https://prestitivlab.polito.it` (Politecnico di Torino — Visionary Lab / Ufficio Multimedialità equipment loans).
@@ -11,6 +11,17 @@
 **v1.2 (2026-07-31):** documented two more post-freeze features — the obfuscated per-user iCal feed (§6.1 `users.ical_token`/`ical_token_generated_at`, §6.12 `edit` event action, §7.5 #90–92, new §7.13) and admin full order editing (§6.12 `edit` action, §7.5 #93, §7.9 #43/#93, §8.2 row 17, §8.4, §9.2, §9.3 `orders.edit_full`) — plus a documentation-only correction: `pending_regulations.blocking` is present on `/auth/login`, `/auth/refresh` and `/auth/me`, not only on `/me/regulations/pending` (§5.5, §7.6 #3/#6). No previously frozen field or endpoint was renamed or removed.
 
 **v1.3 (2026-07-31):** documented staff manual loan creation (§4.2 `LdapDirectoryLookupInterface`, §6.12/§8 `create` event action, §7.5 #94, §7.9 #94, §9.2, §9.3 `orders.create_manual`). No previously frozen field or endpoint was renamed or removed.
+
+**v1.4 (2026-07-31):** the **time-window model** (owner feedback: the default pickup/return time is the lab's global window — "dalle 11 alle 13" — configured in `hours.pickup_windows`/`hours.return_windows`; explicit times are a staff override, never the default).
+- **Schema (migration 0022):** `orders.pickup_time`/`return_time` stay nullable but NULL now *means* "the lab's window for that weekday" instead of "missing data"; new nullable columns `orders.pickup_time_end`/`return_time_end`. Semantics per leg: `*_time` alone = precise override (`"10:15"`); `*_time` + `*_time_end` = custom range override (`"10:15–11:30"`); both NULL = the weekday window.
+- **Representations (§7.4):** `OrderSummary` gains `pickup_time_end`, `return_time_end` (raw) and the server-computed display strings `pickup_window`/`return_window` (override or weekday-window text, `null` when the day has no window) — the frontend never recomputes settings math. `POST /availability/check` (#32) likewise returns `pickup_window`/`return_window` for the requested dates.
+- **Checkout (#40):** students never choose times. `pickup_time`/`return_time` in the payload are *tolerated but IGNORED* (stored NULL); they are no longer required. The time-slot pickers were removed from cart/checkout — the window is shown as informative text.
+- **Staff paths:** manual create (#94) and staff/admin edit (#43/#93/change-dates) accept the four time fields as *optional overrides* (honored). Explicit `null` clears an override; clearing a start drops its dangling end. Validation (error prevention): end requires start, range must be ordered, and overrides must fall within the day's opening hours (`hours.weekly`) — blocked with `422 validation_failed` unless an admin passes `force: true` (warn-not-block: the violation stays on record). Edits only re-validate legs actually touched by the payload, so items-only corrections never trip on legacy times.
+- **Violations (§5.4, Appendix A):** `slot_not_available` (hard, slot-start matching) is replaced by `time_outside_opening_hours` (**soft** — times are staff overrides and never block); slot-start matching is gone.
+- **Consumers:** the order PDF prints the display string (window or override); the iCal feed (§7.13) derives `DTSTART`/`DTEND` from the override (precise = `slot_duration_minutes` long; range = the range) or spans the weekday's first window when times are NULL (09:00 + slot duration as last-resort fallback); the student cancellation deadline counts back from the window start when no override exists.
+- **Staff order UX (consolidation, no API change):** the staff order detail now has ONE primary CTA (the state machine's main transition), one "Altro ▾" overflow for destructive/secondary transitions, ONE edit surface (the edit panel absorbs dates, time overrides, items with live availability, fields and internal notes — the separate note dialog and the per-dialog comment/notes fields were removed; transition dialogs keep only transition-specific input), and the PDF as an icon-button. Live availability (`POST /availability/check`, debounced 400 ms) drives per-row status and submit-gating in the staff create/edit surfaces; the products picker uses `GET /availability/products` when dates are chosen.
+
+No previously frozen field or endpoint was renamed or removed; `pickup_time`/`return_time` keep their name and type, only their required-ness (checkout) and default meaning changed.
 
 > **Rule for implementers:** if this document and your intuition disagree, this document wins. If something is genuinely absent, pick the option that requires the *fewest* new JSON fields and add a `TODO(spec)` comment. Never rename a JSON field.
 
@@ -716,9 +727,11 @@ Indexes: `idx_product_logs_product (product_id, occurred_at)`, `idx_product_logs
 | user_id | fk → users.id | no | | the student |
 | status | string(32) | no | `'draft'` | see §8 |
 | pickup_date | date | yes | null | required from `pending` onward |
-| pickup_time | string(5) | yes | null | `"09:30"` — slot START |
+| pickup_time | string(5) | yes | null | v1.4: NULL = the lab's weekday window; `"10:15"` alone = precise staff override |
+| pickup_time_end | string(5) | yes | null | v1.4: with `pickup_time` = custom range override end |
 | return_date | date | yes | null | requested return date = **due date** |
-| return_time | string(5) | yes | null | slot START |
+| return_time | string(5) | yes | null | v1.4: same override semantics as `pickup_time` |
+| return_time_end | string(5) | yes | null | v1.4: with `return_time` = custom range override end |
 | picked_up_at | datetime | yes | null | actual |
 | returned_at | datetime | yes | null | actual |
 | subject | string(191) | yes | null | *materia / corso* — required at submit |
@@ -1234,9 +1247,13 @@ Visibility rules for `Product` detail:
   "status_label": "Approvato",
   "user": { "id": 3, "display_name": "Marco Rossi", "ldap_uid": "student1" },
   "pickup_date": "2026-08-01",
-  "pickup_time": "09:30",
+  "pickup_time": null,
+  "pickup_time_end": null,
   "return_date": "2026-08-04",
-  "return_time": "16:00",
+  "return_time": null,
+  "return_time_end": null,
+  "pickup_window": "09:00–12:30",
+  "return_window": "14:00–17:00",
   "items_count": 3,
   "distinct_products": 2,
   "exceeds_limits": false,
@@ -2058,9 +2075,9 @@ Field rules:
 | `from_cart` | no (default `true`) | when `true`, the draft order is promoted; `items` is ignored |
 | `items` | required when `from_cart=false` | `[{product_id, quantity, notes?}]`, 1..50 |
 | `pickup_date` | **yes** | valid pickup date (§5.3) |
-| `pickup_time` | **yes** | must equal the `start` of an available pickup slot |
+| `pickup_time` | no | v1.4: tolerated but **IGNORED** — stored NULL, the lab's weekday window applies |
 | `return_date` | **yes** | `>= pickup_date` |
-| `return_time` | **yes** | must equal the `start` of an available return slot |
+| `return_time` | no | v1.4: tolerated but **IGNORED** (see `pickup_time`) |
 | `subject` | **yes** | 2..191 |
 | `motivation` | yes if `booking.require_motivation` | min length `booking.motivation_min_length` |
 | `professor` | yes if `booking.require_professor` | 0..191 |
@@ -2107,8 +2124,10 @@ Field rules:
 | `items` | **yes** | `[{product_id, quantity, notes?}]`, 1..50 — same shape as checkout |
 | `start_date` | **yes** | valid date; contract name. `pickup_date` is accepted as an alias so staff tooling can reuse checkout/edit payload builders |
 | `end_date` | **yes** | `>= start_date`; contract name, alias `return_date` |
-| `pickup_time` | **yes** | `HH:MM` |
-| `return_time` | **yes** | `HH:MM` |
+| `pickup_time` | no | v1.4: optional override, `HH:MM`, honored for staff; NULL = the lab's weekday window; must fall within the day's opening hours unless admin `force: true` |
+| `pickup_time_end` | no | v1.4: custom range end; requires `pickup_time`, must be after it |
+| `return_time` | no | v1.4: same override semantics as `pickup_time` |
+| `return_time_end` | no | v1.4: custom range end; requires `return_time`, must be after it |
 | `subject`, `professor`, `motivation`, `notes`, `staff_notes` | no | free text; unlike checkout **none** of these — including `motivation` — are conditionally required, and length limits follow checkout/edit (191 for `subject`/`professor`, 2000 for the rest) |
 | `initial_status` | no (default `approved`) | `approved` \| `pending`, anything else → `422 validation_failed` |
 | `force` | no (default `false`) | **admin only** — a non-admin sending `force: true` gets `403 forbidden`, whether or not availability would actually have been short |
@@ -2605,7 +2624,7 @@ Resolution: look up `users.ical_token = {token}`; `404 not_found` if no match **
 
 Response `200`: `Content-Type: text/calendar; charset=utf-8`, `Content-Disposition: inline; filename="visionary-lab.ics"`, `Cache-Control: private, max-age=300`. Body is RFC 5545: CRLF line endings throughout, content lines folded at 75 octets (continuation lines start with a single space; multi-byte UTF-8 characters are never split across a fold), `TEXT` values escape `\`, newlines (→ `\n`), `;` and `,` per §3.3.11, applied in that order (backslash first, so escaping never double-escapes itself).
 
-**Two `VEVENT`s per order, not one spanning event** — a pickup appointment and a return appointment, `UID`s `vlab-order-{id}-pickup@visionarylab.polito.it` / `vlab-order-{id}-return@visionarylab.polito.it` (stable across regenerations and across token rotation, so calendar clients update in place instead of duplicating). Event `DTSTART`/`DTEND` span one slot (`settings.hours.slot_duration_minutes`, default 30) starting at the order's `pickup_time`/`return_time`; a leg with no time booked defaults to `09:00` rather than emitting an all-day block. `STATUS` is `TENTATIVE` for `pending` orders, `CONFIRMED` otherwise. Only orders with status in `pending, approved, picked_up, overdue` appear — terminal statuses (`rejected`, `cancelled`, `returned`, `returned_late`, `no_show`) are never in the feed. `SUMMARY` is `"Ritiro {code} · N articoli"` / `"Riconsegna {code} · N articoli"` (staff feed appends `" · {owner display name}"`). `DESCRIPTION` lists status, equipment (from `order_items.product_name_snapshot`, falling back to the live product name, then `"Attrezzatura #{id}"`), and the other leg's date. `LOCATION` is `"{lab.room}, {lab.address}"` (either half omitted if blank) when at least one is set. **No `VTIMEZONE` block**: slot times are stored as local wall clock in the lab timezone (`hours.timezone`) and converted per-event to UTC `…Z` instants at render time, so DST transitions are handled correctly without shipping timezone rules.
+**Two `VEVENT`s per order, not one spanning event** — a pickup appointment and a return appointment, `UID`s `vlab-order-{id}-pickup@visionarylab.polito.it` / `vlab-order-{id}-return@visionarylab.polito.it` (stable across regenerations and across token rotation, so calendar clients update in place instead of duplicating). Event bounds follow the v1.4 time-window model: a precise override (`*_time` alone) spans one slot (`settings.hours.slot_duration_minutes`, default 30) from that time; a range override (`*_time` + `*_time_end`) spans exactly the range; NULL times span the weekday's first configured pickup/return window, with a `09:00` + slot-duration marker as last resort when the day has no window (never an all-day block). `STATUS` is `TENTATIVE` for `pending` orders, `CONFIRMED` otherwise. Only orders with status in `pending, approved, picked_up, overdue` appear — terminal statuses (`rejected`, `cancelled`, `returned`, `returned_late`, `no_show`) are never in the feed. `SUMMARY` is `"Ritiro {code} · N articoli"` / `"Riconsegna {code} · N articoli"` (staff feed appends `" · {owner display name}"`). `DESCRIPTION` lists status, equipment (from `order_items.product_name_snapshot`, falling back to the live product name, then `"Attrezzatura #{id}"`), and the other leg's date. `LOCATION` is `"{lab.room}, {lab.address}"` (either half omitted if blank) when at least one is set. **No `VTIMEZONE` block**: slot times are stored as local wall clock in the lab timezone (`hours.timezone`) and converted per-event to UTC `…Z` instants at render time, so DST transitions are handled correctly without shipping timezone rules.
 
 Two scopes, selected by the resolved user's role:
 - **Student** (non-staff): only that user's own orders, no rolling-window limit (their whole active history).
@@ -3693,7 +3712,7 @@ All values are lowercase snake_case. Italian labels come from `GET /meta/enums`;
 | `setting_type` | `string`, `int`, `bool`, `json`, `time`, `date`, `enum`, `secret` |
 | `setting_group` | `lab`, `hours`, `booking`, `regulations`, `ldap`, `security`, `notifications`, `ui`, `stats` |
 | `violation_severity` | `soft`, `hard` |
-| `violation_code` | `max_loan_days_exceeded`, `max_loan_days_hard_cap_exceeded`, `max_orders_per_month_exceeded`, `max_orders_per_year_exceeded`, `max_active_orders_exceeded`, `max_items_per_order_exceeded`, `max_quantity_per_product_exceeded`, `advance_window_violated`, `date_not_bookable`, `slot_not_available`, `insufficient_availability`, `on_site_only_multi_day`, `regulation_acceptance_required` |
+| `violation_code` | `max_loan_days_exceeded`, `max_loan_days_hard_cap_exceeded`, `max_orders_per_month_exceeded`, `max_orders_per_year_exceeded`, `max_active_orders_exceeded`, `max_items_per_order_exceeded`, `max_quantity_per_product_exceeded`, `advance_window_violated`, `date_not_bookable`, `time_outside_opening_hours` (v1.4, replaces `slot_not_available`), `insufficient_availability`, `on_site_only_multi_day`, `regulation_acceptance_required` |
 | `stats_granularity` | `day`, `week`, `month` |
 | `banner_level` | `info`, `warning`, `danger` |
 

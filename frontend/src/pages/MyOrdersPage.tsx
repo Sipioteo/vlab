@@ -104,11 +104,11 @@ export function MyOrdersPage() {
                 <div className="vl-row" style={{ marginTop: 'var(--sp-3)', gap: 'var(--sp-5)' }}>
                   <span className="vl-subtle">
                     <strong>{t('orders.pickup')}:</strong> {formatDate(order.pickup_date)}{' '}
-                    {order.pickup_time ?? ''}
+                    {order.pickup_window ?? ''}
                   </span>
                   <span className="vl-subtle">
                     <strong>{t('orders.return')}:</strong> {formatDate(order.return_date)}{' '}
-                    {order.return_time ?? ''}
+                    {order.return_window ?? ''}
                   </span>
                   <span className="vl-subtle">{t('orders.itemsCount', { n: order.items_count })}</span>
                 </div>

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Orders;
 
+use App\Domain\Calendar\CalendarService;
 use App\Domain\Settings\SettingsRepository;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Support\Dates;
 use App\Support\Enums;
+use App\Support\OrderTimes;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -35,10 +37,19 @@ final class OrderPdfService
     ];
 
     private string $templatePath;
+    private ?CalendarService $calendar = null;
 
     public function __construct(private SettingsRepository $settings, ?string $templatePath = null)
     {
         $this->templatePath = $templatePath ?? dirname(__DIR__, 3) . '/templates/order_form.php';
+    }
+
+    private function calendarService(): CalendarService
+    {
+        if ($this->calendar === null) {
+            $this->calendar = new CalendarService($this->settings);
+        }
+        return $this->calendar;
     }
 
     public static function isPrintable(Order $order): bool
@@ -115,9 +126,24 @@ final class OrderPdfService
                 'motivation' => $this->text($order->motivation),
                 'notes' => $this->text($order->notes),
                 'pickup_date' => self::itDate(Dates::datePart($order->pickup_date)),
-                'pickup_time' => $this->text($order->pickup_time),
+                // Time-window model (SPEC v1.4 §5.3): the printed time is the
+                // display string — override ("10:15" / "10:15–11:30") when set,
+                // else the lab's weekday window ("09:00–12:30").
+                'pickup_time' => $this->text(OrderTimes::display(
+                    Dates::datePart($order->pickup_date),
+                    $order->pickup_time,
+                    $order->pickup_time_end,
+                    'pickup',
+                    $this->calendarService()
+                )),
                 'return_date' => self::itDate(Dates::datePart($order->return_date)),
-                'return_time' => $this->text($order->return_time),
+                'return_time' => $this->text(OrderTimes::display(
+                    Dates::datePart($order->return_date),
+                    $order->return_time,
+                    $order->return_time_end,
+                    'return',
+                    $this->calendarService()
+                )),
                 'submitted_at' => self::itDateTime($order->submitted_at, $tz),
                 'picked_up_at' => self::itDateTime($order->picked_up_at, $tz),
                 'returned_at' => self::itDateTime($order->returned_at, $tz),

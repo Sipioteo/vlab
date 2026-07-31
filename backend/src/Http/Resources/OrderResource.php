@@ -11,6 +11,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Support\Dates;
 use App\Support\Enums;
+use App\Support\OrderTimes;
 
 final class OrderResource
 {
@@ -18,16 +19,24 @@ final class OrderResource
     public static function summary(Order $order, ?User $viewer = null): array
     {
         $user = $order->user;
+        $pickupDate = Dates::datePart($order->pickup_date);
+        $returnDate = Dates::datePart($order->return_date);
         return [
             'id' => (int) $order->id,
             'code' => $order->code,
             'status' => $order->status,
             'status_label' => Enums::ORDER_STATUS_LABELS[$order->status] ?? $order->status,
             'user' => $user !== null ? UserResource::mini($user) : null,
-            'pickup_date' => Dates::datePart($order->pickup_date),
+            'pickup_date' => $pickupDate,
             'pickup_time' => $order->pickup_time,
-            'return_date' => Dates::datePart($order->return_date),
+            'pickup_time_end' => $order->pickup_time_end,
+            'return_date' => $returnDate,
             'return_time' => $order->return_time,
+            'return_time_end' => $order->return_time_end,
+            // Computed display strings (SPEC v1.4 §7.4): the frontend never
+            // recomputes settings math. NULL times = the weekday's lab window.
+            'pickup_window' => OrderTimes::display($pickupDate, $order->pickup_time, $order->pickup_time_end, 'pickup'),
+            'return_window' => OrderTimes::display($returnDate, $order->return_time, $order->return_time_end, 'return'),
             'items_count' => (int) $order->items_count,
             'distinct_products' => (int) OrderItem::where('order_id', $order->id)->count(),
             'exceeds_limits' => (bool) $order->exceeds_limits,

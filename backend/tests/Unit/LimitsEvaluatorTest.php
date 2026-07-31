@@ -190,9 +190,21 @@ final class LimitsEvaluatorTest extends TestCase
         // Outside advance window -> advance_window_violated.
         $violations = $this->evaluator()->evaluate($this->student(), $this->items(), '2027-08-02', '09:30', '2027-08-03', '14:00');
         $this->assertContains('advance_window_violated', $this->codes($violations));
-        // Bad slot time -> slot_not_available.
+        // Time-window model (SPEC v1.4): any time inside the day's opening
+        // hours is fine (no more slot-start matching)…
         $violations = $this->evaluator()->evaluate($this->student(), $this->items(), '2026-09-07', '13:13', '2026-09-08', '14:00');
-        $this->assertContains('slot_not_available', $this->codes($violations));
+        $this->assertNotContains('slot_not_available', $this->codes($violations));
+        $this->assertNotContains('time_outside_opening_hours', $this->codes($violations));
+        // …while an override outside opening hours is a soft warning, not a block.
+        $violations = $this->evaluator()->evaluate($this->student(), $this->items(), '2026-09-07', '18:30', '2026-09-08', '14:00');
+        $this->assertContains('time_outside_opening_hours', $this->codes($violations));
+        $outside = null;
+        foreach ($violations as $v) {
+            if ($v['code'] === 'time_outside_opening_hours') {
+                $outside = $v;
+            }
+        }
+        $this->assertSame('soft', $outside['severity']);
     }
 
     public function testInsufficientAvailabilityFromPrecomputedInfo(): void

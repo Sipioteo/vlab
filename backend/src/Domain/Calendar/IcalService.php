@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\Dates;
+use App\Support\OrderTimes;
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -138,13 +139,11 @@ final class IcalService
         if ($date === null) {
             return null;
         }
-        $time = $kind === 'pickup' ? $order->pickup_time : $order->return_time;
-
         // `pending` orders have no confirmed pickup yet — still worth showing as
         // TENTATIVE so the student sees the date they asked for.
         $status = $order->status === 'pending' ? 'TENTATIVE' : 'CONFIRMED';
 
-        [$start, $end] = $this->instants($date, is_string($time) ? $time : null);
+        [$start, $end] = $this->instants($order, $kind, $date);
 
         $code = (string) ($order->code ?? ('#' . $order->id));
         $count = (int) $order->items_count;
@@ -185,24 +184,49 @@ final class IcalService
     }
 
     /**
-     * Wall-clock date+slot in the lab timezone → [start, end] UTC instants.
+     * Wall-clock event bounds in the lab timezone → [start, end] UTC instants,
+     * following the time-window model (SPEC v1.4 §5.3):
+     *
+     *  - custom range override (time + time_end): DTSTART..DTEND = the range;
+     *  - precise override (time alone): DTSTART = the time, duration =
+     *    `hours.slot_duration_minutes` — an appointment, not a window;
+     *  - NULL time (the default): DTSTART..DTEND = the weekday's first
+     *    configured window, so the event spans exactly when the lab expects
+     *    the student ("dalle 11 alle 13"), with a 09:00 + slot-duration
+     *    fallback when the day has no window at all.
      *
      * @return array{0:DateTimeImmutable,1:DateTimeImmutable}
      */
-    private function instants(string $date, ?string $time): array
+    private function instants(Order $order, string $kind, string $date): array
     {
         $tz = new DateTimeZone($this->calendar->timezone());
         $duration = (int) ($this->settings->get('hours.slot_duration_minutes', 30) ?? 30);
         if ($duration <= 0) {
             $duration = 30;
         }
-        if ($time === null || !Dates::isValidTime($time)) {
-            // No slot booked: a 09:00 marker beats an all-day blob that most
-            // clients render as a full-width banner.
-            $time = '09:00';
+
+        $time = $kind === 'pickup' ? $order->pickup_time : $order->return_time;
+        $timeEnd = $kind === 'pickup' ? $order->pickup_time_end : $order->return_time_end;
+        $time = is_string($time) && Dates::isValidTime($time) ? $time : null;
+        $timeEnd = is_string($timeEnd) && Dates::isValidTime($timeEnd) ? $timeEnd : null;
+
+        if ($time !== null) {
+            $start = new DateTimeImmutable($date . ' ' . $time . ':00', $tz);
+            $end = $timeEnd !== null && $timeEnd > $time
+                ? new DateTimeImmutable($date . ' ' . $timeEnd . ':00', $tz)
+                : $start->modify('+' . $duration . ' minutes');
+        } else {
+            $window = $this->calendar->windowRanges($date, $kind)[0] ?? null;
+            if ($window !== null) {
+                $start = new DateTimeImmutable($date . ' ' . $window['from'] . ':00', $tz);
+                $end = new DateTimeImmutable($date . ' ' . $window['to'] . ':00', $tz);
+            } else {
+                // No window configured: a 09:00 marker beats an all-day blob
+                // that most clients render as a full-width banner.
+                $start = new DateTimeImmutable($date . ' 09:00:00', $tz);
+                $end = $start->modify('+' . $duration . ' minutes');
+            }
         }
-        $start = new DateTimeImmutable($date . ' ' . $time . ':00', $tz);
-        $end = $start->modify('+' . $duration . ' minutes');
         return [
             $start->setTimezone(new DateTimeZone('UTC')),
             $end->setTimezone(new DateTimeZone('UTC')),
@@ -227,12 +251,14 @@ final class IcalService
             }
         }
         if ($kind === 'pickup' && $order->return_date !== null) {
+            $window = OrderTimes::display((string) Dates::datePart($order->return_date), $order->return_time, $order->return_time_end, 'return', $this->calendar);
             $parts[] = 'Riconsegna prevista: ' . Dates::datePart($order->return_date)
-                . ($order->return_time !== null ? ' alle ' . $order->return_time : '');
+                . ($window !== null ? ' · ' . $window : '');
         }
         if ($kind === 'return' && $order->pickup_date !== null) {
+            $window = OrderTimes::display((string) Dates::datePart($order->pickup_date), $order->pickup_time, $order->pickup_time_end, 'pickup', $this->calendar);
             $parts[] = 'Ritirato il: ' . Dates::datePart($order->pickup_date)
-                . ($order->pickup_time !== null ? ' alle ' . $order->pickup_time : '');
+                . ($window !== null ? ' · ' . $window : '');
         }
         return implode("\n", $parts);
     }

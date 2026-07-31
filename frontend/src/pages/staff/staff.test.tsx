@@ -58,7 +58,9 @@ describe('StaffOrdersPage', () => {
     renderWithProviders(<App />, { route: '/gestione/ordini/89', role: 'technician' });
 
     await screen.findByRole('heading', { name: 'Richiesta VL-2026-0089', level: 1 });
-    await user.click(screen.getByRole('button', { name: 'Rifiuta' }));
+    // Destructive transitions live in the "Altro" overflow (owner request E).
+    await user.click(screen.getByRole('button', { name: 'Altro' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rifiuta' }));
 
     const dialog = await screen.findByRole('dialog');
     const submit = within(dialog).getByRole('button', { name: 'Rifiuta' });

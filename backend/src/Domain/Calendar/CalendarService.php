@@ -158,8 +158,48 @@ class CalendarService
         return $this->slots($date, 'hours.return_windows');
     }
 
-    /** @return array<int,array{start:string,end:string}> */
-    private function slots(string $date, string $windowsKey): array
+    /**
+     * The lab's raw pickup/return window ranges for a date's weekday
+     * (SPEC v1.4 §5.3): `hours.pickup_windows`/`hours.return_windows`, falling
+     * back to the day's `hours.weekly` open/close when no windows are set.
+     * NULL times on an order mean "this window".
+     *
+     * @param string $kind 'pickup' | 'return'
+     * @return array<int,array{from:string,to:string}>
+     */
+    public function windowRanges(string $date, string $kind): array
+    {
+        return $this->rangesFor($date, $kind === 'return' ? 'hours.return_windows' : 'hours.pickup_windows');
+    }
+
+    /**
+     * Human display of the day's window, e.g. "09:00–12:30" (multiple ranges
+     * joined with " / "). Null when the day has no window at all.
+     */
+    public function windowLabel(string $date, string $kind): ?string
+    {
+        $ranges = $this->windowRanges($date, $kind);
+        if ($ranges === []) {
+            return null;
+        }
+        return implode(' / ', array_map(
+            static fn (array $r) => $r['from'] . '–' . $r['to'],
+            $ranges
+        ));
+    }
+
+    /** Opening hours of the date's weekday (`hours.weekly`), or null when closed. */
+    public function openingFor(string $date): ?array
+    {
+        $entry = $this->weekly()[Dates::weekday($date)] ?? null;
+        if ($entry === null || ($entry['closed'] ?? true) !== false) {
+            return null;
+        }
+        return ['open' => (string) $entry['open'], 'close' => (string) $entry['close']];
+    }
+
+    /** @return array<int,array{from:string,to:string}> */
+    private function rangesFor(string $date, string $windowsKey): array
     {
         $weekday = Dates::weekday($date);
         $windows = (array) ($this->settings->get($windowsKey, []) ?? []);
@@ -177,6 +217,14 @@ class CalendarService
                 }
             }
         }
+        usort($ranges, static fn (array $a, array $b) => strcmp($a['from'], $b['from']));
+        return $ranges;
+    }
+
+    /** @return array<int,array{start:string,end:string}> */
+    private function slots(string $date, string $windowsKey): array
+    {
+        $ranges = $this->rangesFor($date, $windowsKey);
         $duration = (int) ($this->settings->get('hours.slot_duration_minutes', 30) ?? 30);
         if ($duration <= 0) {
             $duration = 30;

@@ -37,8 +37,10 @@ final class OrderManualCreateTest extends TestCase
             'items' => [['product_id' => $productId, 'quantity' => 1]],
             'start_date' => '2026-09-10',
             'end_date' => '2026-09-12',
+            // Explicit staff overrides (honored, unlike student checkout);
+            // within every weekday's opening hours.
             'pickup_time' => '09:30',
-            'return_time' => '16:00',
+            'return_time' => '13:00',
             'subject' => 'Laboratorio di Ripresa',
             'motivation' => 'Prestito registrato allo sportello dal tecnico.',
         ];
@@ -290,9 +292,12 @@ final class OrderManualCreateTest extends TestCase
         [$status, $payload] = $this->json('POST', '/api/v1/orders/manual', ['username' => 'student1']);
         $this->assertSame(422, $status);
         $this->assertErrorEnvelope($payload, 'validation_failed');
-        foreach (['start_date', 'end_date', 'pickup_time', 'return_time', 'items'] as $field) {
+        // Times are NOT required anymore (SPEC v1.4 §5.3): NULL = lab window.
+        foreach (['start_date', 'end_date', 'items'] as $field) {
             $this->assertArrayHasKey($field, $payload['error']['details'], $field);
         }
+        $this->assertArrayNotHasKey('pickup_time', $payload['error']['details']);
+        $this->assertArrayNotHasKey('return_time', $payload['error']['details']);
         // Neither user_id nor username → validation error as well.
         [$status2, $payload2] = $this->json('POST', '/api/v1/orders/manual', []);
         $this->assertSame(422, $status2);

@@ -5,24 +5,22 @@ import * as api from '@/api/endpoints';
 import { usePermission } from '@/auth/AuthProvider';
 import { useEnums } from '@/hooks/useEnums';
 import { useToast } from '@/components/Toast';
-import { OrderActions, StatusBadge } from '@/components/domain';
+import { StatusBadge, primaryOrderAction } from '@/components/domain';
 import {
   Badge,
   Button,
   EmptyState,
-  Field,
   Modal,
   Pagination,
   SearchInput,
   Select,
   SkeletonList,
-  TextArea,
   TextInput,
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
 import { t } from '@/i18n/it';
 import { formatDate } from '@/lib/format';
-import type { OrderAction, OrderSummary } from '@/types/api';
+import type { OrderAction } from '@/types/api';
 
 const STATUS_FILTERS = ['pending', 'approved', 'picked_up', 'overdue', 'returned', 'returned_late'];
 
@@ -34,8 +32,6 @@ export function StaffOrdersPage() {
   const canCreateManual = usePermission('orders.create_manual');
 
   const [drawerOrderId, setDrawerOrderId] = useState<number | null>(null);
-  const [rejectOrder, setRejectOrder] = useState<OrderSummary | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
   const [busy, setBusy] = useState<OrderAction | null>(null);
 
   const status = params.get('status');
@@ -93,9 +89,7 @@ export function StaffOrdersPage() {
           : prev,
       );
       setBusy(null);
-      setRejectOrder(null);
-      setRejectReason('');
-      push(t('staff.approved'), 'success');
+      push(t('app.saved'), 'success');
     },
     onError: (error) => {
       setBusy(null);
@@ -103,10 +97,11 @@ export function StaffOrdersPage() {
     },
   });
 
-  function runAction(order: { id: number }, action: OrderAction) {
-    if (action === 'reject') {
-      const summary = (query.data?.data ?? []).find((row) => row.id === order.id) ?? null;
-      setRejectOrder(summary ?? ({ id: order.id, code: null } as unknown as OrderSummary));
+  /* One capability = one place (owner request E): the drawer offers only the
+     state machine's PRIMARY transition; everything else lives in the detail. */
+  function runPrimary(order: { id: number }, action: OrderAction) {
+    if (action === 'pickup' || action === 'return') {
+      // Unit assignment / inspection need the full page.
       return;
     }
     setBusy(action);
@@ -224,10 +219,10 @@ export function StaffOrdersPage() {
                     </td>
                     <td>{order.user.display_name}</td>
                     <td>
-                      {formatDate(order.pickup_date)} <span className="vl-subtle">{order.pickup_time}</span>
+                      {formatDate(order.pickup_date)} <span className="vl-subtle">{order.pickup_window}</span>
                     </td>
                     <td>
-                      {formatDate(order.return_date)} <span className="vl-subtle">{order.return_time}</span>
+                      {formatDate(order.return_date)} <span className="vl-subtle">{order.return_window}</span>
                     </td>
                     <td>
                       <StatusBadge status={order.status} />
@@ -262,18 +257,32 @@ export function StaffOrdersPage() {
         }
         wide
         footer={
-          detail.data ? (
-            <>
-              <Link to={`/gestione/ordini/${detail.data.id}`} className="vl-btn vl-btn--ghost">
-                {t('app.details')}
-              </Link>
-              <OrderActions
-                actions={detail.data.allowed_actions}
-                busyAction={busy}
-                onAction={(action) => runAction(detail.data!, action)}
-              />
-            </>
-          ) : null
+          detail.data
+            ? (() => {
+                const primary = primaryOrderAction(detail.data.allowed_actions);
+                return (
+                  <>
+                    <Link to={`/gestione/ordini/${detail.data.id}`} className="vl-btn vl-btn--ghost">
+                      {t('app.details')}
+                    </Link>
+                    {primary === 'approve' ? (
+                      <Button
+                        variant="primary"
+                        loading={busy === 'approve'}
+                        onClick={() => runPrimary(detail.data!, 'approve')}
+                      >
+                        {t('actions.approve')}
+                      </Button>
+                    ) : primary !== null ? (
+                      /* Unit assignment / inspection need the full page. */
+                      <Link to={`/gestione/ordini/${detail.data.id}`} className="vl-btn vl-btn--primary">
+                        {t(`actions.${primary}`)}
+                      </Link>
+                    ) : null}
+                  </>
+                );
+              })()
+            : null
         }
       >
         {detail.isLoading || !detail.data ? (
@@ -288,13 +297,13 @@ export function StaffOrdersPage() {
               <div>
                 <dt className="vl-datacard__label">{t('orders.pickup')}</dt>
                 <dd style={{ margin: 0 }}>
-                  {formatDate(detail.data.pickup_date)} {detail.data.pickup_time}
+                  {formatDate(detail.data.pickup_date)} {detail.data.pickup_window ?? ''}
                 </dd>
               </div>
               <div>
                 <dt className="vl-datacard__label">{t('orders.return')}</dt>
                 <dd style={{ margin: 0 }}>
-                  {formatDate(detail.data.return_date)} {detail.data.return_time}
+                  {formatDate(detail.data.return_date)} {detail.data.return_window ?? ''}
                 </dd>
               </div>
               <div>
@@ -318,41 +327,6 @@ export function StaffOrdersPage() {
         )}
       </Modal>
 
-      <Modal
-        open={rejectOrder !== null}
-        onClose={() => setRejectOrder(null)}
-        title={t('staff.rejectTitle', { code: rejectOrder?.code ?? '' })}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setRejectOrder(null)}>
-              {t('app.cancel')}
-            </Button>
-            <Button
-              variant="danger"
-              disabled={rejectReason.trim().length === 0}
-              loading={transition.isPending}
-              onClick={() =>
-                rejectOrder &&
-                transition.mutate({ id: rejectOrder.id, action: 'reject', body: { reason: rejectReason } })
-              }
-            >
-              {t('actions.reject')}
-            </Button>
-          </>
-        }
-      >
-        <Field
-          label={t('staff.rejectReason')}
-          htmlFor="reject-reason"
-          error={rejectReason.trim().length === 0 ? t('staff.rejectReasonRequired') : undefined}
-        >
-          <TextArea
-            id="reject-reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          />
-        </Field>
-      </Modal>
     </>
   );
 }

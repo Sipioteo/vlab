@@ -225,15 +225,18 @@ class LimitsEvaluator
             }
             if (!$this->calendar->isWeekdayOpen($pickupDate) || $this->calendar->closureOn($pickupDate, 'pickup') !== null) {
                 $add('date_not_bookable', 'hard', 'La data di ritiro selezionata non è disponibile (laboratorio chiuso).', null, null);
-            } elseif ($pickupTime !== null && !$this->slotExists($this->calendar->pickupSlots($pickupDate), $pickupTime)) {
-                $add('slot_not_available', 'hard', 'L\'orario di ritiro selezionato non è disponibile.', null, null);
+            } elseif ($pickupTime !== null && !$this->withinOpening($pickupDate, $pickupTime)) {
+                // Time-window model (SPEC v1.4 §5.3): times are staff overrides
+                // only (students never send them). Outside opening hours is a
+                // WARNING on record, never a block — staff may know better.
+                $add('time_outside_opening_hours', 'soft', 'L\'orario di ritiro indicato è fuori dall\'orario di apertura del giorno.', null, null);
             }
         }
         if ($returnDate !== null) {
             if (!$this->calendar->isWeekdayOpen($returnDate) || $this->calendar->closureOn($returnDate, 'return') !== null) {
                 $add('date_not_bookable', 'hard', 'La data di riconsegna selezionata non è disponibile (laboratorio chiuso).', null, null);
-            } elseif ($returnTime !== null && !$this->slotExists($this->calendar->returnSlots($returnDate), $returnTime)) {
-                $add('slot_not_available', 'hard', 'L\'orario di riconsegna selezionato non è disponibile.', null, null);
+            } elseif ($returnTime !== null && !$this->withinOpening($returnDate, $returnTime)) {
+                $add('time_outside_opening_hours', 'soft', 'L\'orario di riconsegna indicato è fuori dall\'orario di apertura del giorno.', null, null);
             }
         }
 
@@ -286,15 +289,11 @@ class LimitsEvaluator
         return $count;
     }
 
-    /** @param array<int,array{start:string,end:string}> $slots */
-    private function slotExists(array $slots, string $time): bool
+    /** True when the time falls inside the day's opening hours (`hours.weekly`). */
+    private function withinOpening(string $date, string $time): bool
     {
-        foreach ($slots as $slot) {
-            if ($slot['start'] === $time) {
-                return true;
-            }
-        }
-        return false;
+        $opening = $this->calendar->openingFor($date);
+        return $opening !== null && $time >= $opening['open'] && $time <= $opening['close'];
     }
 
     public static function hasHard(array $violations): bool
