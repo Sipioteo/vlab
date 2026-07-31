@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 64" width="252" height="64" role="img" aria-label="Visionary Lab — Politecnico di Torino">
+  <title>Visionary Lab — Politecnico di Torino</title>
+  <!-- Standalone copy of the Logo component's mark (frontend/src/components/Logo.tsx).
+       Colours are literal here so the file is self-contained; retint plate/accent
+       alongside --color-primary / --color-accent if the palette changes. -->
+  <rect width="64" height="64" rx="4" fill="#00284B"/>
+  <path d="M7.5 11H16L20.25 34.8L24.5 11H33L23.5 53H17Z" fill="#FFFFFF"/>
+  <path d="M40.75 11V48.75H56.5" fill="none" stroke="#EF7B02" stroke-width="8.5"/>
+  <g font-family="Poppins, Roboto, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+    <text x="80" y="32" font-size="22" font-weight="700" letter-spacing="-0.4" fill="#00284B">Visionary Lab</text>
+    <text x="81" y="48.5" font-size="8.6" font-weight="600" letter-spacing="1.75" fill="#6A7A8C">POLITECNICO DI TORINO</text>
+  </g>
+</svg>
