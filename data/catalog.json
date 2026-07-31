@@ -1,0 +1,1723 @@
+{
+  "scraped_at": "2026-07-31T01:14:41Z",
+  "source": "https://prestitivlab.polito.it/catalogo.php",
+  "categories": [
+    {
+      "slug": "audio",
+      "name": "Audio",
+      "position": 1
+    },
+    {
+      "slug": "audio-accessori-e-cavi",
+      "name": "Audio - Accessori e Cavi",
+      "position": 2
+    },
+    {
+      "slug": "hardware-e-software",
+      "name": "Hardware e Software",
+      "position": 3
+    },
+    {
+      "slug": "luci-accessori-fondali",
+      "name": "Luci - Accessori - Fondali",
+      "position": 4
+    },
+    {
+      "slug": "materiale-elettrico",
+      "name": "Materiale Elettrico",
+      "position": 5
+    },
+    {
+      "slug": "supporti",
+      "name": "Supporti",
+      "position": 6
+    },
+    {
+      "slug": "tecnologie-interattive",
+      "name": "Tecnologie Interattive",
+      "position": 7
+    },
+    {
+      "slug": "video",
+      "name": "Video",
+      "position": 8
+    },
+    {
+      "slug": "video-accessori-e-cavi",
+      "name": "Video - Accessori e Cavi",
+      "position": 9
+    }
+  ],
+  "products": [
+    {
+      "name": "Antivento Microfono Rode WS7 Large Deluxe",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "WS7 Large Deluxe",
+      "description": "Antivento Microfono",
+      "image_url": "/foto/Rode_ws7_deluxe_windshield.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r290, r289, r998, r999"
+    },
+    {
+      "name": "Asta a giraffa per microfono, con base tripoide in Proel RSM180",
+      "category_slug": "audio",
+      "brand": "Proel",
+      "model": "RSM180",
+      "description": "Asta a giraffa per microfono, con base tripoide in",
+      "image_url": "/foto/Proel_rsm_180_asta.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r396"
+    },
+    {
+      "name": "Asta telescopica Rode Micro Boompole",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "Micro Boompole",
+      "description": "Asta telescopica",
+      "image_url": "/foto/Rode_AstaTelescopMicrofono.png",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r387, r718, r717, r720"
+    },
+    {
+      "name": "Asta telescopica Rode Micro Boompole V2",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "Micro Boompole V2",
+      "description": "Asta telescopica",
+      "image_url": "/foto/Rode_AstaTelescopMicrofono.png",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1963"
+    },
+    {
+      "name": "Cuffia monitor Audio-Technica ATH-M50x",
+      "category_slug": "audio",
+      "brand": "Audio-Technica",
+      "model": "ATH-M50x",
+      "description": "Cuffia monitor",
+      "image_url": "/foto/Cuffia_monitor_Sony_MDR75061.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2215, r2216, r2217, r2218"
+    },
+    {
+      "name": "Cuffia monitor Sony MDR-75061//Q",
+      "category_slug": "audio",
+      "brand": "Sony",
+      "model": "MDR-75061//Q",
+      "description": "Cuffia monitor",
+      "image_url": "/foto/Cuffia_monitor_Sony_MDR75061.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r1413, r1414, r1415, r1416"
+    },
+    {
+      "name": "Cuffie wireless (supplementari) per RS 120 Sennheiser HDR 120",
+      "category_slug": "audio",
+      "brand": "Sennheiser",
+      "model": "HDR 120",
+      "description": "Cuffie wireless (supplementari) per RS 120",
+      "image_url": "/foto/Sennheiser_HDR120_headphones.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r287"
+    },
+    {
+      "name": "Cuffie Wireless con base Sennheiser RS 120 II",
+      "category_slug": "audio",
+      "brand": "Sennheiser",
+      "model": "RS 120 II",
+      "description": "Cuffie Wireless con base",
+      "image_url": "/foto/Sennheiser_RS120II_headphones.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r347"
+    },
+    {
+      "name": "ENG Set Sennheiser ew 100 G3-C",
+      "category_slug": "audio",
+      "brand": "Sennheiser",
+      "model": "ew 100 G3-C",
+      "description": "ENG Set",
+      "image_url": "/foto/Sennheiser_ew100ENG_G3.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r716, r722, r723, r728"
+    },
+    {
+      "name": "Interfaccia di registrazione audio Behringer Firepower FCA1616",
+      "category_slug": "audio",
+      "brand": "Behringer",
+      "model": "Firepower FCA1616",
+      "description": "Interfaccia di registrazione audio",
+      "image_url": "/foto/Behringer_FCA1616_Firepower.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r392, r393"
+    },
+    {
+      "name": "Microfono Rode Trasmettitore + Ricevitore Audio Wireless RodeLink",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "Trasmettitore + Ricevitore Audio Wireless RodeLink",
+      "description": "Microfono",
+      "image_url": "/foto/rode_rodelink_filmmaker_kit.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r336, r346"
+    },
+    {
+      "name": "Microfono Rode Wireless Pro",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "Wireless Pro",
+      "description": "Microfono",
+      "image_url": "/foto/rode_rodelink_filmmaker_kit.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r1945, r1946, r1947, r1948"
+    },
+    {
+      "name": "Microfono Lavalier CPC MP34260",
+      "category_slug": "audio",
+      "brand": "CPC",
+      "model": "MP34260",
+      "description": "Microfono Lavalier",
+      "image_url": "/foto/Mic_Lavaliere.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 1; ID catalogo: r737"
+    },
+    {
+      "name": "Microfono Lavalier Sanken COS-11D PT Kit",
+      "category_slug": "audio",
+      "brand": "Sanken",
+      "model": "COS-11D PT Kit",
+      "description": "Microfono Lavalier",
+      "image_url": "/foto/Sanken_COS11_kit.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r1418, r1419, r1420, r1959, r1960"
+    },
+    {
+      "name": "Microfono Lavalier Sennheiser MKE-2 EW GOLD",
+      "category_slug": "audio",
+      "brand": "Sennheiser",
+      "model": "MKE-2 EW GOLD",
+      "description": "Microfono Lavalier",
+      "image_url": "/foto/Sennheiser_MKE2-EW.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Mancante: 1, Prestabile Studenti: 1; ID catalogo: r791"
+    },
+    {
+      "name": "Microfono Mezzo Fucile Rode NTG4",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "NTG4",
+      "description": "Microfono Mezzo Fucile",
+      "image_url": "/foto/Rode_ntg4_directional_microphone.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r410, r409"
+    },
+    {
+      "name": "Microfono Mezzo Fucile Sony ECM-673 Shotgun compatto",
+      "category_slug": "audio",
+      "brand": "Sony",
+      "model": "ECM-673 Shotgun compatto",
+      "description": "Microfono Mezzo Fucile",
+      "image_url": "/foto/Sony_ECM-673.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r713, r710, r714, r712"
+    },
+    {
+      "name": "Microfono per Videocamera Rode VideoMic Pro",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "VideoMic Pro",
+      "description": "Microfono per Videocamera",
+      "image_url": "/foto/Rode_VideoMic_Pro.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r324, r326, r1001, r1000"
+    },
+    {
+      "name": "Registratore Digitale Edirol by Roland R-44",
+      "category_slug": "audio",
+      "brand": "Edirol",
+      "model": "by Roland R-44",
+      "description": "Registratore Digitale",
+      "image_url": "/foto/Edirol_R44.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1949, r738"
+    },
+    {
+      "name": "Registratore Digitale Zoom F6",
+      "category_slug": "audio",
+      "brand": "Zoom",
+      "model": "F6",
+      "description": "Registratore Digitale",
+      "image_url": "/foto/Edirol_R44.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r740, r1950"
+    },
+    {
+      "name": "Registratore Digitale 360° ZOOM H3-VR/IFS kit Bushman con BTA-1",
+      "category_slug": "audio",
+      "brand": "Zoom",
+      "model": "H3-VR/IFS kit Bushman con BTA-1",
+      "description": "Registratore Digitale 360°",
+      "image_url": "/foto/Zoom_H3_kit.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1185"
+    },
+    {
+      "name": "Registratore Digitale 360° ZOOM H3-VR/IFS kit Monopod",
+      "category_slug": "audio",
+      "brand": "Zoom",
+      "model": "H3-VR/IFS kit Monopod",
+      "description": "Registratore Digitale 360°",
+      "image_url": "/foto/Zoom_H3_kit.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r2197, r2198, r2199, r2200"
+    },
+    {
+      "name": "Registratore Digitale Portatile ZOOM H5 Handy Recorder",
+      "category_slug": "audio",
+      "brand": "Zoom",
+      "model": "H5 Handy Recorder",
+      "description": "Registratore Digitale Portatile",
+      "image_url": "/foto/Tascam_ZoomH5.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r380, r384"
+    },
+    {
+      "name": "Registratore PCM Lineare Tascam DR-701D",
+      "category_slug": "audio",
+      "brand": "Tascam",
+      "model": "DR-701D",
+      "description": "Registratore PCM Lineare",
+      "image_url": "/foto/Tascam_DR-701D_pcm_recorder.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r394, r1002"
+    },
+    {
+      "name": "Sistema Antivento Microfono Rode Blimp",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "Blimp",
+      "description": "Sistema Antivento Microfono",
+      "image_url": "/foto/Rode_Blimp_winshield.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r389, r390, r996, r997"
+    },
+    {
+      "name": "Supporto a pinza per microfono Proel APM30",
+      "category_slug": "audio",
+      "brand": "Proel",
+      "model": "APM30",
+      "description": "Supporto a pinza per microfono",
+      "image_url": "/foto/Proel_apm30_mic.holder.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r291"
+    },
+    {
+      "name": "Supporto per microfoni Rycote Sospensione Universale",
+      "category_slug": "audio",
+      "brand": "Rycote",
+      "model": "Sospensione Universale",
+      "description": "Supporto per microfoni",
+      "image_url": "/foto/RycoteSospensioneUniversale.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r724, r725, r726, r727"
+    },
+    {
+      "name": "Supporto per microfoni Rode SM4-R - Boompole/Mic Stand Shock Mount",
+      "category_slug": "audio",
+      "brand": "Rode",
+      "model": "SM4-R - Boompole/Mic Stand Shock Mount",
+      "description": "Supporto per microfoni",
+      "image_url": "/foto/rode_sm4-R_mic.stand.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r450, r451"
+    },
+    {
+      "name": "Tastiera MIDI USB Akai Professional LPK25",
+      "category_slug": "audio",
+      "brand": "Akai",
+      "model": "Professional LPK25",
+      "description": "Tastiera MIDI USB",
+      "image_url": "/foto/AKAI_LPK25_tastiera.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r415"
+    },
+    {
+      "name": "Cavo JACK 3.5mm maschio - XLR femmina | 0.5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR femmina | 0.5m",
+      "description": "Cavo",
+      "image_url": "/foto/cavo_35stereo_maschio_XLR_femmina.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r665, r667, r666"
+    },
+    {
+      "name": "Cavo JACK 3.5mm maschio - XLR maschio | 0.5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR maschio | 0.5m",
+      "description": "Cavo",
+      "image_url": "/foto/Cavo_Jack_3.5_M_-_XLR_M.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r668, r669"
+    },
+    {
+      "name": "Cavo JACK 6.3mm maschio - XLR maschio | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio - XLR maschio | 5m",
+      "description": "Cavo",
+      "image_url": "/foto/cavo_jack_63_xlr_maschio.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r565, r566, r567, r568"
+    },
+    {
+      "name": "Cavo RCA maschio - RCA maschio | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "RCA",
+      "model": "maschio - RCA maschio | 5m",
+      "description": "Cavo",
+      "image_url": "/foto/cavo_rca_maschio_rca_maschio.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r598, r599"
+    },
+    {
+      "name": "Cavo XLR maschio - XLR femmina | 5m Sommer",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "XLR",
+      "model": "maschio - XLR femmina | 5m Sommer",
+      "description": "Cavo",
+      "image_url": "/foto/Cavo_XLRf-XLRm_5m_sommer.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r1038, r1039, r1040, r1041"
+    },
+    {
+      "name": "Cavo mono JACK 3.5mm maschio - JACK 3.5mm maschio | 1m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - JACK 3.5mm maschio | 1m",
+      "description": "Cavo mono",
+      "image_url": "/foto/cavo_mini_jack_35mm_maschio_maschio.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r621, r622, r623, r624, r625"
+    },
+    {
+      "name": "Cavo mono JACK 6.3mm maschio - JACK 6.3mm femmina | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio - JACK 6.3mm femmina | 5m",
+      "description": "Cavo mono",
+      "image_url": "/foto/prolunga_jack_63_femmina_63_maschio.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r597"
+    },
+    {
+      "name": "Cavo mono JACK 6.3mm maschio - RCA maschio | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio - RCA maschio | 5m",
+      "description": "Cavo mono",
+      "image_url": "/foto/cavo_63mono_maschio_rca_maschio.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r671, r672"
+    },
+    {
+      "name": "Cavo mono JACK 6.3mm maschio- JACK 6.3mm maschio | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio- JACK 6.3mm maschio | 5m",
+      "description": "Cavo mono",
+      "image_url": "/foto/cavo_jack_63_jack_63_5m.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r595, r596"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - JACK6.3mm maschio | 3m Proel",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - JACK6.3mm maschio | 3m Proel",
+      "description": "Cavo stereo",
+      "image_url": "/foto/Cavo_jack35stereo_63stereo_proel.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r1055, r1056, r1057, r1058"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - JACK6.3mm maschio | 5m Ugreen",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - JACK6.3mm maschio | 5m Ugreen",
+      "description": "Cavo stereo",
+      "image_url": "/foto/Cavo_jack35stereo_63stereo_5m_ugreen.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r1059, r1060, r1061, r1062"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - XLR femmina | 3m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR femmina | 3m",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_35stereo-XLRf_Moborest.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1050, r1051"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - XLR femmina | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR femmina | 5m",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_35stereo-XLRf_Moborest.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1053, r1052"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - XLR maschio | 3m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR maschio | 3m",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_35stereo-XLRm_Moborest.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1046, r1047"
+    },
+    {
+      "name": "Cavo stereo JACK 3.5mm maschio - XLR maschio | 5m",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "3.5mm maschio - XLR maschio | 5m",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_35stereo-XLRm_Moborest.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1048, r1049"
+    },
+    {
+      "name": "Cavo stereo JACK 6.3mm maschio - XLR femmina | 3m ZZIP",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio - XLR femmina | 3m ZZIP",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_63stereo-XLRf_Monacor.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1044, r1045"
+    },
+    {
+      "name": "Cavo stereo JACK 6.3mm maschio - XLR maschio | 3m ZZIP",
+      "category_slug": "audio-accessori-e-cavi",
+      "brand": "JACK",
+      "model": "6.3mm maschio - XLR maschio | 3m ZZIP",
+      "description": "Cavo stereo",
+      "image_url": "/foto/cavo_63stereo-XLRm_Monacor.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1042, r1043"
+    },
+    {
+      "name": "Adattatore Video Apple Thunderbolt > FireWire",
+      "category_slug": "hardware-e-software",
+      "brand": "Apple",
+      "model": "Thunderbolt > FireWire",
+      "description": "Adattatore Video",
+      "image_url": "/foto/Thunderbolt_FireWire_adapter.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r549, r550"
+    },
+    {
+      "name": "Adattatore Video Apple USB-C > Thunderbolt",
+      "category_slug": "hardware-e-software",
+      "brand": "Apple",
+      "model": "USB-C > Thunderbolt",
+      "description": "Adattatore Video",
+      "image_url": "/foto/Thunderbolt_3_to_thunderbolt_2.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r546, r232"
+    },
+    {
+      "name": "Adattatore Video Multiporta Apple USB-C > USB-C / HDMI / USB 3.0",
+      "category_slug": "hardware-e-software",
+      "brand": "Apple",
+      "model": "USB-C > USB-C / HDMI / USB 3.0",
+      "description": "Adattatore Video Multiporta",
+      "image_url": "/foto/Adattatore_Multiporta_Type_USB_31.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r548"
+    },
+    {
+      "name": "Adattatore Video Multiporta Dell DA200 USB-C > HDMI / VGA / USB 3.0 / Ethernet",
+      "category_slug": "hardware-e-software",
+      "brand": "Dell",
+      "model": "DA200 USB-C > HDMI / VGA / USB 3.0 / Ethernet",
+      "description": "Adattatore Video Multiporta",
+      "image_url": "/foto/Dell_Adattatore_USB-C.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r639, r640"
+    },
+    {
+      "name": "Card Reader Rocketek USB 3.0 / Micro USB > TF / Micro SD (XC) / SDXC /M",
+      "category_slug": "hardware-e-software",
+      "brand": "Rocketek",
+      "model": "USB 3.0 / Micro USB > TF / Micro SD (XC) / SDXC /M",
+      "description": "Card Reader",
+      "image_url": "/foto/Rocketek_USB3-CardReader.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r230, r642, r643, r644"
+    },
+    {
+      "name": "Cavo Apple Thunderbolt | 0.5m",
+      "category_slug": "hardware-e-software",
+      "brand": "Apple",
+      "model": "Thunderbolt | 0.5m",
+      "description": "Cavo",
+      "image_url": "/foto/Thunderbolt_cavo_05m.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1102, r1103"
+    },
+    {
+      "name": "External Multi-Display Adapter Matrox TripleHead2Go",
+      "category_slug": "hardware-e-software",
+      "brand": "Matrox",
+      "model": "TripleHead2Go",
+      "description": "External Multi-Display Adapter",
+      "image_url": "/foto/Matrox-TripleHead2Go.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r213, r214"
+    },
+    {
+      "name": "HardDisk Esterno Maxtor M3 - 4TB",
+      "category_slug": "hardware-e-software",
+      "brand": "Maxtor",
+      "model": "M3 - 4TB",
+      "description": "HardDisk Esterno",
+      "image_url": "/foto/Maxtor_M3.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r443, r444"
+    },
+    {
+      "name": "Hub usb Aukey USB-C > USB 3.0",
+      "category_slug": "hardware-e-software",
+      "brand": "Aukey",
+      "model": "USB-C > USB 3.0",
+      "description": "Hub usb",
+      "image_url": "/foto/Hub_usb_AUKEY_CB-C62.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r1091, r1092, r1093"
+    },
+    {
+      "name": "Laptop Alienware P31E002 17''",
+      "category_slug": "hardware-e-software",
+      "brand": "Alienware",
+      "model": "P31E002 17''",
+      "description": "Laptop",
+      "image_url": "/foto/dell_alienware_vr.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r440, r441"
+    },
+    {
+      "name": "Laptop Apple MacBookPro 15'' Touch Bar e Touch ID",
+      "category_slug": "hardware-e-software",
+      "brand": "Apple",
+      "model": "MacBookPro 15'' Touch Bar e Touch ID",
+      "description": "Laptop",
+      "image_url": "/foto/Apple_MacBookPro15.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r359"
+    },
+    {
+      "name": "Monitor 4K LG 27HK650",
+      "category_slug": "hardware-e-software",
+      "brand": "LG",
+      "model": "27HK650",
+      "description": "Monitor 4K",
+      "image_url": "/foto/LG_Monitor_27UK650.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: In Uso: 2, Prestabile Studenti: 1, Prestato: 1; ID catalogo: r428, r431"
+    },
+    {
+      "name": "Software BlackMagic DaVinci Resolve 17 Studio",
+      "category_slug": "hardware-e-software",
+      "brand": "Blackmagic",
+      "model": "DaVinci Resolve 17 Studio",
+      "description": "Software",
+      "image_url": "/foto/davinci_resolve_17.jpg",
+      "quantity": 10,
+      "source_notes": "Stato unità: Prestabile Studenti: 7, Prestato: 3; ID catalogo: r1192, r1193, r1194, r1195, r1196, r1197, r1198, r1199, r1200, r1201"
+    },
+    {
+      "name": "SSD Esterno Samsung T7 Shield 2TB",
+      "category_slug": "hardware-e-software",
+      "brand": "Samsung",
+      "model": "T7 Shield 2TB",
+      "description": "SSD Esterno",
+      "image_url": "/foto/Maxtor_M3.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r2025, r2026, r2027, r2028"
+    },
+    {
+      "name": "Tastiera Blackmagic DaVinci Resolve Speed Editor",
+      "category_slug": "hardware-e-software",
+      "brand": "Blackmagic",
+      "model": "DaVinci Resolve Speed Editor",
+      "description": "Tastiera",
+      "image_url": "/foto/davinci_resolve_speed_editor.jpg",
+      "quantity": 10,
+      "source_notes": "Stato unità: Prestabile Studenti: 10; ID catalogo: r1203, r1204, r1205, r1206, r1212, r1207, r1208, r1209, r1210, r1211"
+    },
+    {
+      "name": "Batteria V-Mount Baxxtar PRO V-Mount",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Baxxtar",
+      "model": "PRO V-Mount",
+      "description": "Batteria V-Mount",
+      "image_url": "/foto/Baxxtar_PRO_V-Mount.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1421, r1422"
+    },
+    {
+      "name": "Batteria V-Mount Swit S-8082S",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Swit",
+      "model": "S-8082S",
+      "description": "Batteria V-Mount",
+      "image_url": "/foto/Baxxtar_PRO_V-Mount.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r2201, r2202"
+    },
+    {
+      "name": "Batterie (4) + Caricatore dual Patona Neewer TP-F970 (compatibile con NP-F***)",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Neewer",
+      "model": "TP-F970 (compatibile con NP-F***)",
+      "description": "Batterie (4) + Caricatore dual Patona",
+      "image_url": "/foto/Caricabatteria_Patona_per_Sony_Camcorder.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2175, r2176, r2177, r2178"
+    },
+    {
+      "name": "Caricabatterie V-Mount Baxxtar PRO V-Mount",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Baxxtar",
+      "model": "PRO V-Mount",
+      "description": "Caricabatterie V-Mount",
+      "image_url": "/foto/Baxxtar_PRO_V-Mount_caricatore.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1423"
+    },
+    {
+      "name": "Faretto per camera Bebob LUX-DV",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Bebob",
+      "model": "LUX-DV",
+      "description": "Faretto per camera",
+      "image_url": "/foto/Faretto_Bebob_20W.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Dismesso: 4, Prestabile Studenti: 4; ID catalogo: r794, r795, r796, r797"
+    },
+    {
+      "name": "Filtri LEE Filters Kit di gelatine di conversione",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "LEE",
+      "model": "Filters Kit di gelatine di conversione",
+      "description": "Filtri",
+      "image_url": "/foto/Lee-filter-gelatine.png",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r401, r456"
+    },
+    {
+      "name": "Fondale Lastolite - Manfrotto Panoramico Verde LL LB7622 | 4m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Lastolite",
+      "model": "- Manfrotto Panoramico Verde LL LB7622 | 4m",
+      "description": "Fondale",
+      "image_url": "/foto/Lastolite_fondaleverde.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r404"
+    },
+    {
+      "name": "Fondale Neewer Sfondo ChromaKey Verde | 6x3m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Neewer",
+      "model": "Sfondo ChromaKey Verde | 6x3m",
+      "description": "Fondale",
+      "image_url": "/foto/Neewer_Pro_Pure_sfondo.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r614, r615"
+    },
+    {
+      "name": "Fondale PhotoSEL BD123GU - verde/blu 2x2.4m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "PhotoSEL",
+      "model": "BD123GU - verde/blu 2x2.4m",
+      "description": "Fondale",
+      "image_url": "/foto/PhotoSEL_Sfondo_pieghevole_chromakey.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r416"
+    },
+    {
+      "name": "Fondale PhotoSEL BD213GU - verde/blu 1,5x2m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "PhotoSEL",
+      "model": "BD213GU - verde/blu 1,5x2m",
+      "description": "Fondale",
+      "image_url": "/foto/PhotoSel_Sfondo_chromaKey.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r503"
+    },
+    {
+      "name": "Fondale Pixapro pieghevole verde/blu 2x1.5m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Pixapro",
+      "model": "pieghevole verde/blu 2x1.5m",
+      "description": "Fondale",
+      "image_url": "/foto/Sfondo_pieghevole_chromakey200x150.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r745"
+    },
+    {
+      "name": "Fondale Rosco Cinefoil | Matt Black 61x762",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Rosco",
+      "model": "Cinefoil | Matt Black 61x762",
+      "description": "Fondale",
+      "image_url": "/foto/Rosco_vinefoil_matt_black.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r516"
+    },
+    {
+      "name": "Kit Luci Bematik 800 Watt | 3200K -- GUASTE",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Bematik",
+      "model": "800 Watt | 3200K -- GUASTE",
+      "description": "Kit Luci",
+      "image_url": "/foto/Kit_Luci_Bematik_800w.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 1; ID catalogo: r739"
+    },
+    {
+      "name": "Kit Luci MVPOWER 80x80x80cm",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "MVPOWER",
+      "model": "80x80x80cm",
+      "description": "Kit Luci",
+      "image_url": "/foto/MVPOWER_80x80x80CM_Kit_Illuminazione.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 1; ID catalogo: r425"
+    },
+    {
+      "name": "Kit Luci LED Aputure H528KIT-WWS ELET",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Aputure",
+      "model": "H528KIT-WWS ELET",
+      "description": "Kit Luci LED",
+      "image_url": "/foto/Aputure_Amaran_H528S_LED_Luce_Video_Set.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r477"
+    },
+    {
+      "name": "Kit Luci LED Aputure HR672KIT-WWS BAT",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Aputure",
+      "model": "HR672KIT-WWS BAT",
+      "description": "Kit Luci LED",
+      "image_url": "/foto/Aputure_hr672-kit_led-video-light.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r411"
+    },
+    {
+      "name": "Kit Luci Studio Roditec + DynaSun Fancier FL-455 1300W + W807",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Roditec",
+      "model": "+ DynaSun Fancier FL-455 1300W + W807",
+      "description": "Kit Luci Studio",
+      "image_url": "/foto/Roditec-DynaSun_FL455-W807.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r281, r282, r283, r284"
+    },
+    {
+      "name": "Luci Amaran COB 150c full RGB con att. Bowens",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Amaran",
+      "model": "COB 150c full RGB con att. Bowens",
+      "description": "Luci",
+      "image_url": "/foto/Arri_L00001955-L5-C_luce.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r2185, r2186, r2187"
+    },
+    {
+      "name": "Luci Amaran COB 200x S bicolor con att. Bowens",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Amaran",
+      "model": "COB 200x S bicolor con att. Bowens",
+      "description": "Luci",
+      "image_url": "/foto/Arri_L00015234_L7-C_luci.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r2182, r2183, r2184"
+    },
+    {
+      "name": "Luci Amaran COB 60x S bicolor con att. Bowens",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Amaran",
+      "model": "COB 60x S bicolor con att. Bowens",
+      "description": "Luci",
+      "image_url": "/foto/Arri_L00001955-L5-C_luce.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r2179, r2180, r2181"
+    },
+    {
+      "name": "Luci Neewer RGB 660 - kit 3 luci e stativi",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Neewer",
+      "model": "RGB 660 - kit 3 luci e stativi",
+      "description": "Luci",
+      "image_url": "/foto/Neewer_660_Led_panel_cavalletto.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r1942, r1943, r1944"
+    },
+    {
+      "name": "Luci Yongnuo YN300 III | Pro LED Video Light | 3200K - 5500K",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Yongnuo",
+      "model": "YN300 III | Pro LED Video Light | 3200K - 5500K",
+      "description": "Luci",
+      "image_url": "/foto/Yongnuo_YN300_IIILEDVideoLight_Camcorder.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r524, r525, r526, r527, r528"
+    },
+    {
+      "name": "Morsa da Studio Manfrotto 035 - Cuneo Triangolare, Perno Spigot, Chiusura Bl",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Manfrotto",
+      "model": "035 - Cuneo Triangolare, Perno Spigot, Chiusura Bl",
+      "description": "Morsa da Studio",
+      "image_url": "/foto/Morsa_cuneo_triangolare_perno_spigot.jpg",
+      "quantity": 6,
+      "source_notes": "Stato unità: Prestabile Studenti: 6; ID catalogo: r535, r536, r537, r538, r649, r540"
+    },
+    {
+      "name": "Pinze x Telo Chromakey Ravelli n. 6",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Ravelli",
+      "model": "n. 6",
+      "description": "Pinze x Telo Chromakey",
+      "image_url": "/foto/Ravelli_kit_pinze.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r479, r656, r657, r658"
+    },
+    {
+      "name": "Riflettore Neewer 10000076 | Multi-disco 5 in 1 | 110cm",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Neewer",
+      "model": "10000076 | Multi-disco 5 in 1 | 110cm",
+      "description": "Riflettore",
+      "image_url": "/foto/Neewer_10000076_Multi-Disco_5-in-1.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r530, r531, r1974, r2029, r2030"
+    },
+    {
+      "name": "Softbox octa Godox SB-GUE80 80cm att. Bowens",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Godox",
+      "model": "SB-GUE80 80cm att. Bowens",
+      "description": "Softbox octa",
+      "image_url": "/foto/softbox_luce_55w_5600K.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r2190, r2191, r2192"
+    },
+    {
+      "name": "Stativo luci ON-AIR LT-200 (2m, 5kg max)",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "ON-AIR",
+      "model": "LT-200 (2m, 5kg max)",
+      "description": "Stativo luci",
+      "image_url": "/foto/Muraro_LT-240S.jpg",
+      "quantity": 6,
+      "source_notes": "Stato unità: Prestabile Studenti: 6; ID catalogo: r2203, r2204, r2205, r2206, r2207, r2208"
+    },
+    {
+      "name": "Stativo luci ON-AIR LT-240 S",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "ON-AIR",
+      "model": "LT-240 S",
+      "description": "Stativo luci",
+      "image_url": "/foto/Muraro_LT-240S.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r556, r488, r557, r492, r493"
+    },
+    {
+      "name": "Stativo luci ON-AIR LT-385SB",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "ON-AIR",
+      "model": "LT-385SB",
+      "description": "Stativo luci",
+      "image_url": "/foto/Stativo_LT-385AB.jpg",
+      "quantity": 8,
+      "source_notes": "Stato unità: Prestabile Studenti: 8; ID catalogo: r630, r631, r632, r633, r634, r635, r636, r637"
+    },
+    {
+      "name": "Supporto ChromaKey Dynasun 290x380m",
+      "category_slug": "luci-accessori-fondali",
+      "brand": "Dynasun",
+      "model": "290x380m",
+      "description": "Supporto ChromaKey",
+      "image_url": "/foto/Supporto_fondale_chromakey_DynaSun.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r554, r555"
+    },
+    {
+      "name": "Prolunga elettrica Electraline Avvolgicavo 15m 16A 4 prese multi H05VV-F",
+      "category_slug": "materiale-elettrico",
+      "brand": "Electraline",
+      "model": "Avvolgicavo 15m 16A 4 prese multi H05VV-F",
+      "description": "Prolunga elettrica",
+      "image_url": "/foto/avvolgicavo_Electraline_15m.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r741, r742, r743, r744"
+    },
+    {
+      "name": "Prolunga elettrica F.A.I. Avvolgicavo 20m 16A 4 prese multi",
+      "category_slug": "materiale-elettrico",
+      "brand": "F.A.I.",
+      "model": "Avvolgicavo 20m 16A 4 prese multi",
+      "description": "Prolunga elettrica",
+      "image_url": "/foto/avvolgicavo_20m.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r426"
+    },
+    {
+      "name": "Prolunga elettrica Link Creative Multipresa 6 porte con interruttore - LKMP06",
+      "category_slug": "materiale-elettrico",
+      "brand": "Link",
+      "model": "Creative Multipresa 6 porte con interruttore - LKMP06",
+      "description": "Prolunga elettrica",
+      "image_url": "/foto/Link_LKMP06.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r220, r221, r222, r223"
+    },
+    {
+      "name": "Crane Kessler Pocket Jib Traveler",
+      "category_slug": "supporti",
+      "brand": "Kessler",
+      "model": "Pocket Jib Traveler",
+      "description": "Crane",
+      "image_url": "/foto/Kessler_Crane_Pocket_Jib.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r408"
+    },
+    {
+      "name": "Dolly Indie Dolly cavalletti con spike e bracci regolabili",
+      "category_slug": "supporti",
+      "brand": "Indie",
+      "model": "Dolly cavalletti con spike e bracci regolabili",
+      "description": "Dolly",
+      "image_url": "/foto/Indie_Singleman_Dolly.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1581"
+    },
+    {
+      "name": "Dolly Track Indie Dolly curved",
+      "category_slug": "supporti",
+      "brand": "Indie",
+      "model": "Dolly curved",
+      "description": "Dolly Track",
+      "image_url": "/foto/Indie_Dolly_Track_Curved.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1582"
+    },
+    {
+      "name": "Dolly Track Indie Dolly linear",
+      "category_slug": "supporti",
+      "brand": "Indie",
+      "model": "Dolly linear",
+      "description": "Dolly Track",
+      "image_url": "/foto/Indie_Dolly_Track_Linear.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1583"
+    },
+    {
+      "name": "Magic arm SmallRig Super Clamp SR 2732B",
+      "category_slug": "supporti",
+      "brand": "SmallRig",
+      "model": "Super Clamp SR 2732B",
+      "description": "Magic arm",
+      "image_url": "/foto/Rosco_vinefoil_matt_black.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2193, r2194, r2195, r2196"
+    },
+    {
+      "name": "Slider Konova K5-A1-150 V3",
+      "category_slug": "supporti",
+      "brand": "Konova",
+      "model": "K5-A1-150 V3",
+      "description": "Slider",
+      "image_url": "/foto/Kit_Slider_Konova_testa_Sfera_Zecti.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r423, r424"
+    },
+    {
+      "name": "Spallaccio Tilta TA-LSR-B",
+      "category_slug": "supporti",
+      "brand": "Tilta",
+      "model": "TA-LSR-B",
+      "description": "Spallaccio",
+      "image_url": "/foto/DJI-Ronin-M_Stabilizzatore-2Batterie.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r2188, r2189"
+    },
+    {
+      "name": "Stabilizzatore DJI RS 3 Pro",
+      "category_slug": "supporti",
+      "brand": "DJI",
+      "model": "RS 3 Pro",
+      "description": "Stabilizzatore",
+      "image_url": "/foto/Ronin_S_gimbal.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1957, r1958"
+    },
+    {
+      "name": "Supporto per Alpha7 SmallRig Cage Kit",
+      "category_slug": "supporti",
+      "brand": "SmallRig",
+      "model": "Cage Kit",
+      "description": "Supporto per Alpha7",
+      "image_url": "/foto/Supporto_camera_Sony_Smallrig_cage_per_A7III.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 3; ID catalogo: r508, r509, r510"
+    },
+    {
+      "name": "Testa a sfera Bushman Kalahari V2",
+      "category_slug": "supporti",
+      "brand": "Bushman",
+      "model": "Kalahari V2",
+      "description": "Testa a sfera",
+      "image_url": "/foto/bushman_testa360_kalahari.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1191"
+    },
+    {
+      "name": "Testa a sfera Neewer 9996",
+      "category_slug": "supporti",
+      "brand": "Neewer",
+      "model": "9996",
+      "description": "Testa a sfera",
+      "image_url": "/foto/Neewer_9996_headball.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1006"
+    },
+    {
+      "name": "Testa a sfera Zecti ZT-046",
+      "category_slug": "supporti",
+      "brand": "Zecti",
+      "model": "ZT-046",
+      "description": "Testa a sfera",
+      "image_url": "/foto/Zecti_ZT-046_CameraBal.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r398, r399"
+    },
+    {
+      "name": "Treppiede Cartoni con testa Delta",
+      "category_slug": "supporti",
+      "brand": "Cartoni",
+      "model": "con testa Delta",
+      "description": "Treppiede",
+      "image_url": "/foto/Cavalletto_Cartoni_testa_Delta.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r757"
+    },
+    {
+      "name": "Treppiede Coman KX 3939",
+      "category_slug": "supporti",
+      "brand": "Coman",
+      "model": "KX 3939",
+      "description": "Treppiede",
+      "image_url": "/foto/Coman_KX3939_Video_Tripod.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r471, r472"
+    },
+    {
+      "name": "Treppiede Manfrotto MVB525-519",
+      "category_slug": "supporti",
+      "brand": "Manfrotto",
+      "model": "MVB525-519",
+      "description": "Treppiede",
+      "image_url": "/foto/MANFROTTO_MVH502A-546GB.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r753, r754, r755"
+    },
+    {
+      "name": "Treppiede Manfrotto MVT502AM-Kit 502",
+      "category_slug": "supporti",
+      "brand": "Manfrotto",
+      "model": "MVT502AM-Kit 502",
+      "description": "Treppiede",
+      "image_url": "/foto/ManfrottoMVT502AM.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r405, r406"
+    },
+    {
+      "name": "Cavo Oculus Link (PC VR) 5m",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Oculus",
+      "model": "Link (PC VR) 5m",
+      "description": "Cavo",
+      "image_url": "/foto/cavo_oculus_link_pcvr_5m.jpg",
+      "quantity": 8,
+      "source_notes": "Stato unità: Prestabile Studenti: 5, Prestato: 3; ID catalogo: r1123, r1124, r1125, r1126, r1127, r1128, r1129, r1130"
+    },
+    {
+      "name": "Electric Paint Bare Conductive 1 x 10ml tube",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Bare",
+      "model": "Conductive 1 x 10ml tube",
+      "description": "Electric Paint",
+      "image_url": "/foto/BareConductive_ElectricPaint.jpg",
+      "quantity": 19,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 19; ID catalogo: r248, r249, r250, r251, r252, r253, r254, r255, r256, r257, r258, r259, r260, r261, r262, r263, r264, r265, r266"
+    },
+    {
+      "name": "Electronics Prototype Bare Conductive Touch Bord Pro Kit",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Bare",
+      "model": "Conductive Touch Bord Pro Kit",
+      "description": "Electronics Prototype",
+      "image_url": "/foto/BareConductive_TouchBoardProKit.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r272"
+    },
+    {
+      "name": "Invention Kit Makey Makey Classic Education box",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Makey",
+      "model": "Makey Classic Education box",
+      "description": "Invention Kit",
+      "image_url": "/foto/Makey_Makey_Classic_Education_box.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1081, r1082"
+    },
+    {
+      "name": "Motion Controller Leap Motion Controller Mouse",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Leap",
+      "model": "Motion Controller Mouse",
+      "description": "Motion Controller",
+      "image_url": "/foto/LeapMotion.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r275, r276"
+    },
+    {
+      "name": "Nastro adesivo di rame Ueetek 30m x 6mm",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Ueetek",
+      "model": "30m x 6mm",
+      "description": "Nastro adesivo di rame",
+      "image_url": "/foto/UEETEK_nastro_adesivo_rame.jpg",
+      "quantity": 6,
+      "source_notes": "Stato unità: Prestabile Studenti: 6; ID catalogo: r1555, r1556, r1557, r1558, r1559, r1560"
+    },
+    {
+      "name": "Printed sensors Bare Conductive",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Bare",
+      "model": "Conductive",
+      "description": "Printed sensors",
+      "image_url": "/foto/Bare_Conductive_printed_sensors.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r1577, r1578, r1579"
+    },
+    {
+      "name": "Scheda Arduino UNO Rev3 [A000066]",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Arduino",
+      "model": "UNO Rev3 [A000066]",
+      "description": "Scheda",
+      "image_url": "/foto/Arduino_UNO_Rev3.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r1554, r1571, r1572, r1573"
+    },
+    {
+      "name": "Sensor kit Arduino Base [TPX00031]",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Arduino",
+      "model": "Base [TPX00031]",
+      "description": "Sensor kit",
+      "image_url": "/foto/Arduino_Sensor_Kit_Base.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r1570, r1574, r1575, r1576"
+    },
+    {
+      "name": "Smartphone Samsung Galaxy S8 | SM-G950F | 64GB",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Samsung",
+      "model": "Galaxy S8 | SM-G950F | 64GB",
+      "description": "Smartphone",
+      "image_url": "/foto/Samsung_GalaxyS8.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r239"
+    },
+    {
+      "name": "Visore Oculus Meta Quest 3 512gb",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Oculus",
+      "model": "Meta Quest 3 512gb",
+      "description": "Visore",
+      "image_url": "/foto/visore_Oculus_Quest_allinone_64GB.jpg",
+      "quantity": 17,
+      "source_notes": "Stato unità: Prestabile Studenti: 14, Prestato: 3; ID catalogo: r2133, r2135, r2136, r2137, r2138, r2139, r2140, r2141, r2143, r2144, r2145, r2146, r2147, r2148, r2149, r2150, r2151"
+    },
+    {
+      "name": "Visore Oculus Meta Quest 3 512gb + Cinturino Elite",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Oculus",
+      "model": "Meta Quest 3 512gb + Cinturino Elite",
+      "description": "Visore",
+      "image_url": "/foto/visore_Oculus_Quest_allinone_64GB.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r2132, r2134, r2142"
+    },
+    {
+      "name": "Visore Oculus Quest All in one 64GB",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Oculus",
+      "model": "Quest All in one 64GB",
+      "description": "Visore",
+      "image_url": "/foto/visore_Oculus_Quest_allinone_64GB.jpg",
+      "quantity": 7,
+      "source_notes": "Stato unità: Prestabile Studenti: 7; ID catalogo: r1134, r1135, r1141, r1136, r1139, r1140, r1138"
+    },
+    {
+      "name": "Visore Oculus Rift",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Oculus",
+      "model": "Rift",
+      "description": "Visore",
+      "image_url": "/foto/Oculus_Rift_Virtual_Reality_Headset.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r485, r498"
+    },
+    {
+      "name": "Visore Samsung Gear VR | SM-R325",
+      "category_slug": "tecnologie-interattive",
+      "brand": "Samsung",
+      "model": "Gear VR | SM-R325",
+      "description": "Visore",
+      "image_url": "/foto/Samsung_gear_VR_controller.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r499"
+    },
+    {
+      "name": "Adattatori Filtri SKUO629 SKUO629 - kit step-down da 82mm a 37mm",
+      "category_slug": "video",
+      "brand": "SKUO629",
+      "model": "SKUO629 - kit step-down da 82mm a 37mm",
+      "description": "Adattatori Filtri",
+      "image_url": "/foto/Tiffen_filtro_protettivo.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2034, r2035, r2036, r2037"
+    },
+    {
+      "name": "Adattatori Filtri SKUO629 SKUO629 - kit step-up da 37mm a 82mm",
+      "category_slug": "video",
+      "brand": "SKUO629",
+      "model": "SKUO629 - kit step-up da 37mm a 82mm",
+      "description": "Adattatori Filtri",
+      "image_url": "/foto/Tiffen_filtro_protettivo.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r1975, r2031, r2032, r2033"
+    },
+    {
+      "name": "Alimentatore per fotocamere Canon ACK-E5",
+      "category_slug": "video",
+      "brand": "Canon",
+      "model": "ACK-E5",
+      "description": "Alimentatore per fotocamere",
+      "image_url": "/foto/canon_ACK-E_adapter_kit.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r760"
+    },
+    {
+      "name": "Batteria Sony NP-FZ100",
+      "category_slug": "video",
+      "brand": "Sony",
+      "model": "NP-FZ100",
+      "description": "Batteria",
+      "image_url": "/foto/Sony_NP-FZ100_Battery.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r523, r520, r333, r334"
+    },
+    {
+      "name": "Camcorder Canon XF305",
+      "category_slug": "video",
+      "brand": "Canon",
+      "model": "XF305",
+      "description": "Camcorder",
+      "image_url": "/foto/Canon_XF305_KIT.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r785, r786"
+    },
+    {
+      "name": "Camcorder Sony PMW-EX3",
+      "category_slug": "video",
+      "brand": "Sony",
+      "model": "PMW-EX3",
+      "description": "Camcorder",
+      "image_url": "/foto/Sony_PMW-EX3_kit.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r761, r762, r763, r764"
+    },
+    {
+      "name": "Camcorder Sony PMW-EX3 Adattore SD card",
+      "category_slug": "video",
+      "brand": "Sony",
+      "model": "PMW-EX3 Adattore SD card",
+      "description": "Camcorder",
+      "image_url": "/foto/SD_card_adapter_sony_XDCam.jpg",
+      "quantity": 5,
+      "source_notes": "Stato unità: Prestabile Studenti: 5; ID catalogo: r769, r770, r771, r773, r774"
+    },
+    {
+      "name": "Filtri ND K&F Concept NANO-X -- 4 Filtri ND da 72mm - ND1000, ND 64, ND8",
+      "category_slug": "video",
+      "brand": "K&F Concept",
+      "model": "NANO-X -- 4 Filtri ND da 72mm - ND1000, ND 64, ND8",
+      "description": "Filtri ND",
+      "image_url": "/foto/KF_Concept_Filter_67mm.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r2043, r2044"
+    },
+    {
+      "name": "Filtri ND K&F Concept NANO-X -- 4 Filtri ND da 77mm - ND1000, ND 64, ND8",
+      "category_slug": "video",
+      "brand": "K&F Concept",
+      "model": "NANO-X -- 4 Filtri ND da 77mm - ND1000, ND 64, ND8",
+      "description": "Filtri ND",
+      "image_url": "/foto/KF_Concept_Filter_67mm.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1976, r2042"
+    },
+    {
+      "name": "Filtri ND variabile K&F Concept NANO-X ND-3-1000 MRC 82mm",
+      "category_slug": "video",
+      "brand": "K&F Concept",
+      "model": "NANO-X ND-3-1000 MRC 82mm",
+      "description": "Filtri ND variabile",
+      "image_url": "/foto/KF_Concept_Filter_67mm.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2045, r2046, r2047, r2048"
+    },
+    {
+      "name": "Filtro Neewer 24 filtri Completi e Graduati",
+      "category_slug": "video",
+      "brand": "Neewer",
+      "model": "24 filtri Completi e Graduati",
+      "description": "Filtro",
+      "image_url": "/foto/KIT_filtri_graduati_Neewer_24_pezzi.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r620"
+    },
+    {
+      "name": "Follow focus Wooden Camera UFF-1 (Pro)",
+      "category_slug": "video",
+      "brand": "Wooden Camera",
+      "model": "UFF-1 (Pro)",
+      "description": "Follow focus",
+      "image_url": "/foto/Wooden_Camera_UFF-1.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r356"
+    },
+    {
+      "name": "Fotocamera GoPro Max | Kit",
+      "category_slug": "video",
+      "brand": "GoPro",
+      "model": "Max | Kit",
+      "description": "Fotocamera",
+      "image_url": "/foto/Kit_GoPromax_Bushman.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 3, Prestato: 1; ID catalogo: r1114, r1116, r1117, r1118"
+    },
+    {
+      "name": "Fotocamera Insta360 X5 | Kit",
+      "category_slug": "video",
+      "brand": "Insta360",
+      "model": "X5 | Kit",
+      "description": "Fotocamera",
+      "image_url": "/foto/Kit_Go_Pro_9_Black.jpg",
+      "quantity": 7,
+      "source_notes": "Stato unità: Prestabile Studenti: 5, Prestato: 2; ID catalogo: r2167, r2168, r2169, r2170, r2171, r2172, r2173"
+    },
+    {
+      "name": "Fotocamera Sony Alfa 7 MARK III | Kit",
+      "category_slug": "video",
+      "brand": "Sony",
+      "model": "Alfa 7 MARK III | Kit",
+      "description": "Fotocamera",
+      "image_url": "/foto/Kit_Alfa7completo.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r321, r327, r325"
+    },
+    {
+      "name": "Lettore CFexpress 2.0 Type B Angelbird Card Reader PKT CFexpress B",
+      "category_slug": "video",
+      "brand": "Angelbird",
+      "model": "Card Reader PKT CFexpress B",
+      "description": "Lettore CFexpress 2.0 Type B",
+      "image_url": "/foto/Sandisk_lettore_schede_Cfast_SDPR2E8.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestato: 1; ID catalogo: r2213"
+    },
+    {
+      "name": "Monitor BlackMagic VideoAssist 4K",
+      "category_slug": "video",
+      "brand": "Blackmagic",
+      "model": "VideoAssist 4K",
+      "description": "Monitor",
+      "image_url": "/foto/Kit_Videoassist.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r376, r1003, r1005"
+    },
+    {
+      "name": "Monitor BlackMagic VideoAssist 4K - SOLO A BATTERIA",
+      "category_slug": "video",
+      "brand": "Blackmagic",
+      "model": "VideoAssist 4K - SOLO A BATTERIA",
+      "description": "Monitor",
+      "image_url": "/foto/Kit_Videoassist.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1004"
+    },
+    {
+      "name": "Monitor BlackMagic VideoAssist 7'' 12G HDR",
+      "category_slug": "video",
+      "brand": "Blackmagic",
+      "model": "VideoAssist 7'' 12G HDR",
+      "description": "Monitor",
+      "image_url": "/foto/Kit_Videoassist.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r1961"
+    },
+    {
+      "name": "Obiettivo Canon EF 50mm f/1.4 USM",
+      "category_slug": "video",
+      "brand": "Canon",
+      "model": "EF 50mm f/1.4 USM",
+      "description": "Obiettivo",
+      "image_url": "/foto/Canon_EF_50mm_f1.4_USM_Lens.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r378"
+    },
+    {
+      "name": "Obiettivo Canon EF 85mm f/1.8 USM",
+      "category_slug": "video",
+      "brand": "Canon",
+      "model": "EF 85mm f/1.8 USM",
+      "description": "Obiettivo",
+      "image_url": "/foto/Canon_EF_85mm_f1-8_usm_lens.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r377"
+    },
+    {
+      "name": "Obiettivo Sigma 35mm f/1.4 DG HSM",
+      "category_slug": "video",
+      "brand": "Sigma",
+      "model": "35mm f/1.4 DG HSM",
+      "description": "Obiettivo",
+      "image_url": "/foto/Sigma_35mm_f1.4_DG.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r373, r375"
+    },
+    {
+      "name": "Obiettivo Sigma 70-200mm f/2.8 APO EX DG OS",
+      "category_slug": "video",
+      "brand": "Sigma",
+      "model": "70-200mm f/2.8 APO EX DG OS",
+      "description": "Obiettivo",
+      "image_url": "/foto/Sigma_Obiettivo_70-200mm.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 1, Prestato: 1; ID catalogo: r476, r475"
+    },
+    {
+      "name": "Obiettivo Tamron A032 - SP 24-70mm f/2.8 di VC USD G2",
+      "category_slug": "video",
+      "brand": "Tamron",
+      "model": "A032 - SP 24-70mm f/2.8 di VC USD G2",
+      "description": "Obiettivo",
+      "image_url": "/foto/Tamron_24-70mm_f-2.8.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r473, r474"
+    },
+    {
+      "name": "Obiettivo Tamron SP 15-30mm f/2.8 USD Di",
+      "category_slug": "video",
+      "brand": "Tamron",
+      "model": "SP 15-30mm f/2.8 USD Di",
+      "description": "Obiettivo",
+      "image_url": "/foto/Tamron_15-30mm_f-2.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r470"
+    },
+    {
+      "name": "Obiettivo Kit 6 Samyang VDSLR | 14 / 24 / 35 / 50 / 85 / 135mm",
+      "category_slug": "video",
+      "brand": "Samyang",
+      "model": "VDSLR | 14 / 24 / 35 / 50 / 85 / 135mm",
+      "description": "Obiettivo Kit 6",
+      "image_url": "/foto/Samyang_VDSLR_lens-kit.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r366, r1007"
+    },
+    {
+      "name": "Obiettivo Paraluce BlueBeach® ES-71II",
+      "category_slug": "video",
+      "brand": "BlueBeach®",
+      "model": "ES-71II",
+      "description": "Obiettivo Paraluce",
+      "image_url": "/foto/BlueBeach_ES-71_paraluce_Canon_50mm.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r500"
+    },
+    {
+      "name": "Ottica grandangolare Fujinon XS8x4AS-XB8",
+      "category_slug": "video",
+      "brand": "Fujinon",
+      "model": "XS8x4AS-XB8",
+      "description": "Ottica grandangolare",
+      "image_url": "/foto/Fujinon_XS8x4AS-XB8.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r792, r793"
+    },
+    {
+      "name": "Scheda di acquisizione BlackMagic UltraStudio 4K",
+      "category_slug": "video",
+      "brand": "Blackmagic",
+      "model": "UltraStudio 4K",
+      "description": "Scheda di acquisizione",
+      "image_url": "/foto/Blackmagic_Ultrastudio-4k.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r374"
+    },
+    {
+      "name": "Scheda di memoria CFexpress 2.0 Type B Angelbird AV PRO SE 512GB 800 MB/s",
+      "category_slug": "video",
+      "brand": "Angelbird",
+      "model": "AV PRO SE 512GB 800 MB/s",
+      "description": "Scheda di memoria CFexpress 2.0 Type B",
+      "image_url": "/foto/SDHC_Lexar_32gb_150mbs.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 2, Prestato: 1; ID catalogo: r2209, r2210, r2211"
+    },
+    {
+      "name": "Scheda di memoria CFexpress 4.0 Type B Angelbird AV PRO SE 512GB 1050 MB/s",
+      "category_slug": "video",
+      "brand": "Angelbird",
+      "model": "AV PRO SE 512GB 1050 MB/s",
+      "description": "Scheda di memoria CFexpress 4.0 Type B",
+      "image_url": "/foto/SDHC_Lexar_64gb_150mbs.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestato: 1; ID catalogo: r2212"
+    },
+    {
+      "name": "Scheda di memoria SDHC SanDisk SanDisk Ultra 32GB 80 MB/s",
+      "category_slug": "video",
+      "brand": "SanDisk",
+      "model": "SanDisk Ultra 32GB 80 MB/s",
+      "description": "Scheda di memoria SDHC",
+      "image_url": "/foto/Sandisk-64gb-Extreme-Pro.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Mancante: 1, Prestabile Studenti: 1; ID catalogo: r776"
+    },
+    {
+      "name": "Scheda di memoria SDXC SanDisk Extreme PRO 128 GB 170 MB/s",
+      "category_slug": "video",
+      "brand": "SanDisk",
+      "model": "Extreme PRO 128 GB 170 MB/s",
+      "description": "Scheda di memoria SDXC",
+      "image_url": "/foto/Sandisk-128GB_Extreme-Pro.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r1119, r1120"
+    },
+    {
+      "name": "Scheda di memoria SDXC SanDisk Extreme PRO 64 GB 300 MB/s",
+      "category_slug": "video",
+      "brand": "SanDisk",
+      "model": "Extreme PRO 64 GB 300 MB/s",
+      "description": "Scheda di memoria SDXC",
+      "image_url": "/foto/Sandisk-64gb-Extreme-Pro.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Dismesso: 1, Prestabile Studenti: 1; ID catalogo: r439"
+    },
+    {
+      "name": "Scheda di memoria TOUGH Sony TOUGH V90 128gb 300Mb/s",
+      "category_slug": "video",
+      "brand": "Sony",
+      "model": "TOUGH V90 128gb 300Mb/s",
+      "description": "Scheda di memoria TOUGH",
+      "image_url": "/foto/Sandisk-128gb-Extreme-Pro.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r2039, r2040"
+    },
+    {
+      "name": "Video Proiettore Portatile Optoma W304M",
+      "category_slug": "video",
+      "brand": "Optoma",
+      "model": "W304M",
+      "description": "Video Proiettore Portatile",
+      "image_url": "/foto/optoma_w304m.jpg",
+      "quantity": 2,
+      "source_notes": "Stato unità: Prestabile Studenti: 2; ID catalogo: r469, r483"
+    },
+    {
+      "name": "Videocamera Insta360 Pro 8K Google Street View Package",
+      "category_slug": "video",
+      "brand": "Insta360",
+      "model": "Pro 8K Google Street View Package",
+      "description": "Videocamera",
+      "image_url": "/foto/Kit_Insta360_Pro.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r385"
+    },
+    {
+      "name": "Videocamera RED Komodo Camera Kit",
+      "category_slug": "video",
+      "brand": "RED",
+      "model": "Komodo Camera Kit",
+      "description": "Videocamera",
+      "image_url": "/foto/RedRaven_Camera_kit.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r2174"
+    },
+    {
+      "name": "Videocamera RED Raven Camera Kit",
+      "category_slug": "video",
+      "brand": "RED",
+      "model": "Raven Camera Kit",
+      "description": "Videocamera",
+      "image_url": "/foto/RedRaven_Camera_kit.jpg",
+      "quantity": 1,
+      "source_notes": "Stato unità: Prestabile Studenti: 1; ID catalogo: r361"
+    },
+    {
+      "name": "Camera Bag Porta Brace CAR-2CAM",
+      "category_slug": "video-accessori-e-cavi",
+      "brand": "Porta",
+      "model": "Brace CAR-2CAM",
+      "description": "Camera Bag",
+      "image_url": "/foto/portabrace_borsa_CAR-2CAM.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r765, r766, r767, r768"
+    },
+    {
+      "name": "Ciak cinematografico con pennarello e cancellino",
+      "category_slug": "video-accessori-e-cavi",
+      "brand": null,
+      "model": "con pennarello e cancellino",
+      "description": "Ciak cinematografico",
+      "image_url": "/foto/Ciak_on-air.jpg",
+      "quantity": 4,
+      "source_notes": "Stato unità: Prestabile Studenti: 4; ID catalogo: r2053, r2054, r2055, r2056"
+    },
+    {
+      "name": "Valigia resina HPRC 2600W",
+      "category_slug": "video-accessori-e-cavi",
+      "brand": "HPRC",
+      "model": "2600W",
+      "description": "Valigia resina",
+      "image_url": "/foto/HPRC_valigia_resina.jpg",
+      "quantity": 3,
+      "source_notes": "Stato unità: Prestabile Studenti: 3; ID catalogo: r777, r778, r779"
+    }
+  ]
+}
