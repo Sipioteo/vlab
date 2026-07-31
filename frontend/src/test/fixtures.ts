@@ -48,6 +48,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, Permissions> = {
     'regulations.delete': false,
     'closures.manage': false,
     'orders.reopen': false,
+    'orders.edit_full': false,
     'audit.view': false,
   },
   assistant: {
@@ -65,6 +66,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, Permissions> = {
     'regulations.delete': false,
     'closures.manage': false,
     'orders.reopen': false,
+    'orders.edit_full': false,
     'audit.view': false,
   },
   technician: {
@@ -82,6 +84,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, Permissions> = {
     'regulations.delete': false,
     'closures.manage': true,
     'orders.reopen': false,
+    'orders.edit_full': false,
     'audit.view': false,
   },
   admin: {
@@ -99,6 +102,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, Permissions> = {
     'regulations.delete': true,
     'closures.manage': true,
     'orders.reopen': true,
+    'orders.edit_full': true,
     'audit.view': true,
   },
 };

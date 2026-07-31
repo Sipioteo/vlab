@@ -321,6 +321,8 @@ export const it = {
     professorLabel: 'Docente di riferimento',
     lateBy: 'In ritardo di {n} giorni',
     notFound: 'Richiesta non trovata',
+    frozenNote:
+      'La richiesta non si può modificare una volta inviata: se serve, annullala e creane una nuova, o chiedi al laboratorio.',
   },
 
   actions: {
@@ -335,6 +337,7 @@ export const it = {
     note: 'Aggiungi nota',
     edit: 'Modifica',
     mark_overdue: 'Segna in ritardo',
+    change_dates: 'Cambia date',
   },
 
   staff: {
@@ -387,6 +390,24 @@ export const it = {
     noShowTitle: 'Segnare come non ritirata?',
     notesTitle: 'Note interne',
     comment: 'Commento',
+    editOrder: 'Modifica prestito',
+    editOrderTitle: 'Modifica del prestito {code}',
+    editOrderLead:
+      'Da amministratore puoi correggere qualsiasi dettaglio, anche di prestiti passati. Le modifiche restano tracciate nella cronologia.',
+    editItems: 'Attrezzature',
+    editAddProduct: 'Aggiungi attrezzatura',
+    editSearchProduct: 'Cerca un’attrezzatura da aggiungere…',
+    editNoItems: 'Serve almeno un’attrezzatura.',
+    editRemoveItem: 'Togli',
+    editForce: 'Forza la modifica anche senza disponibilità',
+    editForceWarning:
+      'Da usare solo per registrare quello che è successo davvero: il prestito risulterà sovraprenotato per queste date.',
+    editConflictTitle: 'Disponibilità non sufficiente',
+    editConflictLine: '{product}: richieste {requested}, disponibili {available}.',
+    editConflictHint:
+      'In quelle date questa attrezzatura non è libera: cambia le date, riduci le quantità o forza la modifica.',
+    editForcedSaved: 'Modifica forzata salvata: il prestito è sovraprenotato.',
+    editSaved: 'Prestito aggiornato.',
     productName: 'Nome attrezzatura',
     productsTitle: 'Gestione attrezzature',
     productsLead: 'Aggiungi, correggi o togli dal catalogo.',
@@ -519,6 +540,29 @@ export const it = {
     quota: 'I tuoi limiti',
   },
 
+  ical: {
+    title: 'Calendario (iCal)',
+    leadStudent:
+      'Un link privato con i tuoi ritiri e le tue riconsegne. Incollalo in Google Calendar, Apple Calendar o Outlook e si aggiorna da solo.',
+    leadStaff:
+      'Un link privato con tutti i ritiri e le riconsegne del laboratorio (ultimi 30 giorni e prossimi 120). Incollalo in Google Calendar, Apple Calendar o Outlook: si aggiorna da solo.',
+    fieldLabel: 'Indirizzo del calendario',
+    copy: 'Copia il link',
+    copied: 'Link copiato.',
+    copyFailed: 'Non siamo riusciti a copiare. Selezionalo a mano.',
+    rotate: 'Rigenera link',
+    rotateConfirmTitle: 'Rigenerare il link del calendario?',
+    rotateConfirmBody:
+      'Il vecchio link smetterà di funzionare. Dovrai reinserire quello nuovo in ogni calendario in cui l’avevi messo.',
+    rotated: 'Nuovo link generato.',
+    privacyNote:
+      'Chi ha il link vede il calendario senza fare login: condividilo solo con chi vuoi. Se ti è sfuggito di mano, rigeneralo.',
+    howToTitle: 'Come si aggiunge',
+    howToGoogle: 'Google Calendar: Altri calendari › Da URL › incolla il link.',
+    howToApple: 'Apple Calendar: File › Nuova sottoscrizione al calendario › incolla il link.',
+    howToOutlook: 'Outlook: Aggiungi calendario › Sottoscrivi dal Web › incolla il link.',
+  },
+
   regulations: {
     title: 'Regolamento',
     lead: 'Cosa sapere prima di portarti via un’attrezzatura.',
@@ -538,6 +582,19 @@ export const it = {
     acceptAll: 'Conferma e prosegui',
     accepted2: 'Regolamento accettato.',
     empty: 'Nessun regolamento pubblicato.',
+    /* Blocking gate dialog shown at login / app boot. */
+    gateTitle: 'Prima di continuare',
+    gateLead:
+      'Il regolamento è cambiato. Leggilo e accettalo: finché non lo fai il resto della piattaforma resta bloccato.',
+    gateOneLead:
+      'C’è un regolamento da accettare. Leggilo fino in fondo e conferma: dopo torni subito a quello che stavi facendo.',
+    gateProgress: 'Accettati {done} di {total}',
+    gateHint: 'Spunta ogni documento per abilitare il pulsante.',
+    gateLogout: 'Esci dall’account',
+    gateLoading: 'Carichiamo i documenti…',
+    acceptNow: 'Accetta ora',
+    acceptOne: 'Accetta questo regolamento',
+    toAccept: 'Da accettare',
   },
 
   errors: {

@@ -165,13 +165,60 @@ final class OrderController extends Controller
         return $this->json($response, OrderResource::detail($order, $user, $this->machine, $this->regulations));
     }
 
-    /** PUT /orders/{id} — staff edit before pickup. */
+    /**
+     * PUT /orders/{id} — staff edit before pickup; admins (`orders.edit_full`)
+     * get the full edit path on any submitted order in any state.
+     */
     public function update(Request $request, Response $response, array $args): Response
     {
         $user = $this->requireUser($request);
         $order = $this->findOrder((int) $args['id'], $user);
-        $order = $this->orders->editOrder($order, $user, $this->body($request));
+        $body = $this->body($request);
+        if ($user->role === 'admin') {
+            [$order, $overbook] = $this->orders->editOrderFull($order, $user, $body);
+            return $this->json($response, $this->detailWithOverbook($order, $user, $overbook));
+        }
+        // Full-edit-only fields are admin territory: refuse with 403 instead of
+        // silently ignoring them.
+        foreach (['motivation', 'notes', 'force'] as $field) {
+            if (array_key_exists($field, $body)) {
+                throw ApiException::forbidden('La modifica completa dei prestiti richiede il permesso orders.edit_full.');
+            }
+        }
+        $order = $this->orders->editOrder($order, $user, $body);
         return $this->json($response, OrderResource::detail($order, $user, $this->machine, $this->regulations));
+    }
+
+    /**
+     * POST /orders/{id}/change-dates — admin-only date/slot correction with
+     * availability re-check (and optional `force` override). Students never
+     * reach this: a submitted order is frozen on the student side.
+     */
+    public function changeDates(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->requireUser($request);
+        $order = $this->findOrder((int) $args['id'], $user);
+        $this->machine->assertCan($order, 'change_dates', $user);
+        $body = $this->body($request);
+        $allowed = ['pickup_date', 'pickup_time', 'return_date', 'return_time', 'force', 'comment'];
+        [$order, $overbook] = $this->orders->editOrderFull(
+            $order,
+            $user,
+            array_intersect_key($body, array_flip($allowed)),
+            true
+        );
+        return $this->json($response, $this->detailWithOverbook($order, $user, $overbook));
+    }
+
+    /** @return array<string,mixed> detail payload + forced-overbook flag */
+    private function detailWithOverbook(Order $order, User $user, ?array $overbook): array
+    {
+        $data = OrderResource::detail($order, $user, $this->machine, $this->regulations);
+        if ($overbook !== null) {
+            $data['forced_overbook'] = true;
+            $data['overbooked_products'] = $overbook;
+        }
+        return $data;
     }
 
     public function approve(Request $request, Response $response, array $args): Response

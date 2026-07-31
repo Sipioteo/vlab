@@ -12,6 +12,7 @@ use App\Domain\Auth\RealLdapAuthenticator;
 use App\Domain\Auth\RoleResolver;
 use App\Domain\Availability\AvailabilityService;
 use App\Domain\Calendar\CalendarService;
+use App\Domain\Calendar\IcalService;
 use App\Domain\Orders\LimitsEvaluator;
 use App\Domain\Orders\OrderPdfService;
 use App\Domain\Orders\OrderService;
@@ -27,6 +28,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClosureController;
+use App\Http\Controllers\IcalController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -101,6 +103,7 @@ function vlab_create_app(): App
     $container->set(SettingsRepository::class, static fn () => SettingsRepository::instance());
     $container->set(SettingsValidator::class, static fn () => new SettingsValidator());
     $container->set(CalendarService::class, static fn (Container $c) => new CalendarService($c->get(SettingsRepository::class)));
+    $container->set(IcalService::class, static fn (Container $c) => new IcalService($c->get(SettingsRepository::class), $c->get(CalendarService::class)));
     $container->set(AvailabilityService::class, static fn (Container $c) => new AvailabilityService($c->get(SettingsRepository::class), $c->get(CalendarService::class)));
     $container->set(LimitsEvaluator::class, static fn (Container $c) => new LimitsEvaluator($c->get(SettingsRepository::class), $c->get(CalendarService::class), $c->get(AvailabilityService::class)));
     $container->set(OrderStateMachine::class, static fn (Container $c) => new OrderStateMachine($c->get(SettingsRepository::class), $c->get(CalendarService::class)));
@@ -176,6 +179,7 @@ function vlab_create_app(): App
         $c->get(OrderService::class)
     ));
     $container->set(CalendarController::class, static fn (Container $c) => new CalendarController($c->get(CalendarService::class)));
+    $container->set(IcalController::class, static fn (Container $c) => new IcalController($c->get(IcalService::class), $c->get('config')));
     $container->set(CartController::class, static fn (Container $c) => new CartController($c->get(OrderService::class), $c->get(AvailabilityService::class)));
     $container->set(OrderController::class, static fn (Container $c) => new OrderController(
         $c->get(OrderService::class),
@@ -268,6 +272,13 @@ function vlab_create_app(): App
         $group->post('/availability/check', [AvailabilityController::class, 'check'])->add($authRequired);
         $group->get('/calendar/opening', [CalendarController::class, 'opening']);
 
+        // --- iCal feed ------------------------------------------------------
+        // No auth on the feed itself: the opaque token in the path IS the
+        // credential (calendar clients cannot send an Authorization header).
+        $group->get('/ical/{token:[0-9a-f]{32,64}}.ics', [IcalController::class, 'feed']);
+        $group->get('/me/ical', [IcalController::class, 'mine'])->add($authRequired);
+        $group->post('/me/ical/rotate', [IcalController::class, 'rotate'])->add($authRequired);
+
         // --- cart & orders --------------------------------------------------
         $group->get('/cart', [CartController::class, 'show'])->add($studentOnly)->add($authRequired);
         $group->post('/cart/items', [CartController::class, 'addItem'])->add($studentOnly)->add($authRequired);
@@ -292,6 +303,7 @@ function vlab_create_app(): App
         $group->post('/orders/{id:[0-9]+}/return', [OrderController::class, 'returnOrder'])->add($staff)->add($authRequired);
         $group->post('/orders/{id:[0-9]+}/no-show', [OrderController::class, 'noShow'])->add($staff)->add($authRequired);
         $group->post('/orders/{id:[0-9]+}/reopen', [OrderController::class, 'reopen'])->add($adminOnly)->add($authRequired);
+        $group->post('/orders/{id:[0-9]+}/change-dates', [OrderController::class, 'changeDates'])->add($adminOnly)->add($authRequired);
         $group->post('/orders/{id:[0-9]+}/notes', [OrderController::class, 'notes'])->add($staff)->add($authRequired);
         $group->get('/orders/{id:[0-9]+}/events', [OrderController::class, 'events'])->add($authRequired);
         // Printable loan form: header auth OR ?token= (same pattern as the regulations PDF stream).

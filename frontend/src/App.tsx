@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { RequireAuth, RequireRole } from '@/auth/guards';
 import { AppShell } from '@/components/AppShell';
 import { StaffLayout } from '@/components/StaffLayout';
 import { Splash } from '@/components/Splash';
+import { RegulationGateDialog, isBlockingRegulation } from '@/components/RegulationGateDialog';
 
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -17,7 +18,6 @@ import { MyOrdersPage } from '@/pages/MyOrdersPage';
 import { OrderDetailPage } from '@/pages/OrderDetailPage';
 import { RegulationsPage } from '@/pages/RegulationsPage';
 import { RegulationDetailPage } from '@/pages/RegulationDetailPage';
-import { AcceptRegulationsPage } from '@/pages/AcceptRegulationsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ForbiddenPage, NotFoundPage } from '@/pages/ErrorPages';
 
@@ -37,17 +37,30 @@ import { SettingsPage } from '@/pages/staff/SettingsPage';
 import { AuditLogPage } from '@/pages/staff/AuditLogPage';
 
 /**
- * Blocking global regulations replace every route until accepted
- * (SPEC §5.5 / §11.4), except the login and the regulation pages themselves.
+ * Blocking global regulations (SPEC §5.5 / §11.4) put a modal in front of the
+ * whole shell — on login *and* on boot with a stored session — instead of
+ * routing the user somewhere they have to discover on their own.
+ *
+ * The app keeps rendering behind the dialog (so the user sees where they are)
+ * but is marked `inert` + `aria-hidden`: no clicks, no tabbing, no screen
+ * reader wandering. `inert` is passed as a raw DOM attribute because React 18
+ * has no typed prop for it.
  */
 function RegulationGate({ children }: { children: ReactNode }) {
   const { pendingRegulations, isAuthenticated } = useAuth();
-  const location = useLocation();
-  const blocking = isAuthenticated && pendingRegulations.some((reg) => reg.blocking);
-  const exempt =
-    location.pathname.startsWith('/regolamento') || location.pathname.startsWith('/login');
-  if (blocking && !exempt) return <AcceptRegulationsPage />;
-  return <>{children}</>;
+  const blocking = isAuthenticated && pendingRegulations.some(isBlockingRegulation);
+  const inertProps = blocking
+    ? ({ inert: '', 'aria-hidden': 'true' } as Record<string, string>)
+    : {};
+
+  return (
+    <>
+      <div className="vl-approot" data-blocked={blocking ? 'true' : undefined} {...inertProps}>
+        {children}
+      </div>
+      {blocking ? <RegulationGateDialog /> : null}
+    </>
+  );
 }
 
 function Staff({ children }: { children: ReactNode }) {
@@ -65,8 +78,8 @@ export function App() {
   }
 
   return (
-    <AppShell>
-      <RegulationGate>
+    <RegulationGate>
+      <AppShell>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -75,14 +88,12 @@ export function App() {
           <Route path="/prodotto/:slug" element={<ProductDetailPage />} />
           <Route path="/disponibilita" element={<AvailabilityFinderPage />} />
           <Route path="/regolamento" element={<RegulationsPage />} />
-          <Route
-            path="/regolamento/accetta"
-            element={
-              <RequireAuth>
-                <AcceptRegulationsPage />
-              </RequireAuth>
-            }
-          />
+          {/*
+            Legacy interstitial. Acceptance is now a modal that finds the user,
+            so old links and bookmarks just land on the regulations index — the
+            gate pops by itself if anything is actually pending.
+          */}
+          <Route path="/regolamento/accetta" element={<Navigate to="/regolamento" replace />} />
           <Route path="/regolamento/:slug" element={<RegulationDetailPage />} />
 
           <Route
@@ -293,7 +304,7 @@ export function App() {
           <Route path="/index.html" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </RegulationGate>
-    </AppShell>
+      </AppShell>
+    </RegulationGate>
   );
 }

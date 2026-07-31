@@ -36,6 +36,45 @@ final class RegulationTest extends TestCase
         $this->assertNotContains('avvertenze-vr', $slugs);
     }
 
+    /**
+     * Regression: login and /auth/me used to omit `blocking`, so the SPA gate —
+     * which keys the blocking modal off that flag — never fired and there was
+     * literally no way for a user to accept anything.
+     */
+    public function testPendingRegulationsCarryTheBlockingFlagEverywhere(): void
+    {
+        [, $login] = $this->json('POST', '/api/v1/auth/login', ['username' => 'student1', 'password' => 'password']);
+        $this->assertNotSame([], $login['pending_regulations']);
+        foreach ($login['pending_regulations'] as $reg) {
+            $this->assertArrayHasKey('blocking', $reg, 'login payload must carry blocking');
+            $this->assertTrue($reg['blocking']);
+        }
+
+        $this->actingAs('student');
+        [, $me] = $this->json('GET', '/api/v1/auth/me');
+        $this->assertNotSame([], $me['pending_regulations']);
+        foreach ($me['pending_regulations'] as $reg) {
+            $this->assertArrayHasKey('blocking', $reg, '/auth/me payload must carry blocking');
+            $this->assertTrue($reg['blocking']);
+        }
+
+        [, $pending] = $this->json('GET', '/api/v1/me/regulations/pending');
+        foreach ($pending['data'] as $reg) {
+            $this->assertTrue($reg['blocking']);
+        }
+    }
+
+    /** Staff are held to the same global regulations as students (§9 matrix). */
+    public function testStaffAlsoGetBlockingGlobalRegulations(): void
+    {
+        foreach (['technician', 'assistant', 'admin'] as $role) {
+            $this->actingAs($role);
+            [, $me] = $this->json('GET', '/api/v1/auth/me');
+            $slugs = array_map(static fn ($r) => $r['slug'], $me['pending_regulations']);
+            $this->assertContains('regolamento-generale', $slugs, $role . ' must be gated too');
+        }
+    }
+
     public function testAcceptClearsPendingAndIsIdempotent(): void
     {
         $this->actingAs('student');

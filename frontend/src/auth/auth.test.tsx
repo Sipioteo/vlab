@@ -105,23 +105,45 @@ describe('permission-driven UI (borsista vs tecnico)', () => {
 });
 
 describe('regulation gate', () => {
-  it('replaces every route with the acceptance screen while a blocking regulation is pending', async () => {
-    server.use(
-      http.get('/api/v1/auth/me', () =>
-        HttpResponse.json(makeMe('student', { pending_regulations: [pendingGlobalRegulation] })),
-      ),
-    );
+  it('puts a blocking dialog in front of the app on boot with a pending regulation', async () => {
+    mockState.pendingRegulations = [pendingGlobalRegulation];
 
     renderApp('/catalogo', 'student');
 
-    expect(
-      await screen.findByRole('heading', { name: 'Accetta i regolamenti', level: 1 }),
-    ).toBeVisible();
-    expect(screen.queryByRole('heading', { name: 'Catalogo attrezzature' })).toBeNull();
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(dialog).toHaveTextContent('Prima di continuare');
+    // The route still renders — but behind an inert, aria-hidden shell.
+    const shell = document.querySelector('.vl-approot')!;
+    expect(shell).toHaveAttribute('inert');
+    expect(shell).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('lets the app through once nothing is pending', async () => {
     renderApp('/catalogo', 'student');
     expect(await screen.findByRole('heading', { name: 'Catalogo attrezzature', level: 1 })).toBeVisible();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('redirects the legacy /regolamento/accetta interstitial to the index', async () => {
+    renderApp('/regolamento/accetta', 'student');
+    expect(await screen.findByRole('heading', { name: 'Regolamento', level: 1 })).toBeVisible();
+  });
+
+  it('still honours a login response that omits the blocking flag', async () => {
+    // Defence in depth: a global scope is blocking whether or not the backend
+    // says so — this is exactly the field whose absence broke the whole flow.
+    const { blocking: _blocking, ...withoutFlag } = pendingGlobalRegulation;
+    server.use(
+      http.get('/api/v1/auth/me', () =>
+        HttpResponse.json(makeMe('student', { pending_regulations: [withoutFlag] })),
+      ),
+      http.get('/api/v1/me/regulations/pending', () =>
+        HttpResponse.json({ data: [withoutFlag], meta: null }),
+      ),
+    );
+
+    renderApp('/catalogo', 'student');
+    expect(await screen.findByRole('dialog')).toBeVisible();
   });
 });

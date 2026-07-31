@@ -36,6 +36,13 @@ class OrderStateMachine
         'reopen' => ['rejected', 'cancelled', 'no_show', 'returned', 'returned_late'],
         'edit' => ['pending', 'approved'],
         'note' => ['draft', 'pending', 'approved', 'picked_up', 'overdue'],
+        // Admin-only date correction, available in every submitted state
+        // (orders.edit_full). Students never get it: a submitted order is
+        // frozen on the student side.
+        'change_dates' => [
+            'pending', 'approved', 'rejected', 'cancelled',
+            'picked_up', 'overdue', 'returned', 'returned_late', 'no_show',
+        ],
     ];
 
     public function __construct(
@@ -95,6 +102,7 @@ class OrderStateMachine
             case 'note':
                 return $isStaff;
             case 'reopen':
+            case 'change_dates':
                 return $viewer->role === 'admin';
         }
         return false;

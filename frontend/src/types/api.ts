@@ -28,7 +28,8 @@ export type OrderAction =
   | 'mark_overdue'
   | 'reopen'
   | 'note'
-  | 'edit';
+  | 'edit'
+  | 'change_dates';
 
 export type ActorType = 'user' | 'system';
 export type ProductStatus = 'available' | 'maintenance' | 'retired';
@@ -335,6 +336,16 @@ export interface Order extends OrderSummary {
   required_regulations: OrderRequiredRegulation[];
   allowed_actions: OrderAction[];
   updated_at: string;
+  /** present only after an admin `force: true` save that overbooked stock */
+  forced_overbook?: boolean;
+  overbooked_products?: OrderOverbookedProduct[];
+}
+
+export interface OrderOverbookedProduct {
+  product_id: number;
+  name: string | null;
+  requested: number;
+  available: number;
 }
 
 export interface OrderEvent {
@@ -421,6 +432,13 @@ export interface Regulation {
   updated_at: string;
 }
 
+/** Per-user obfuscated iCal subscription link (rotatable). */
+export interface IcalFeed {
+  token: string;
+  feed_url: string;
+  generated_at: string | null;
+}
+
 export interface PendingRegulation {
   id: number;
   slug: string;
@@ -450,6 +468,7 @@ export interface Permissions {
   'regulations.delete': boolean;
   'closures.manage': boolean;
   'orders.reopen': boolean;
+  'orders.edit_full': boolean;
   'audit.view': boolean;
 }
 

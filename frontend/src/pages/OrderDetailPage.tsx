@@ -110,7 +110,7 @@ export function OrderDetailPage() {
       ) : order.status === 'pending' ? (
         <div style={{ marginBottom: 'var(--sp-5)' }}>
           <Alert level="info" icon="clock" title={t('orders.pendingTitle')}>
-            {t('orders.pendingBody')}
+            {t('orders.pendingBody')} {t('orders.frozenNote')}
           </Alert>
         </div>
       ) : null}

@@ -2,9 +2,17 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
+import { ApiError } from '@/api/client';
+import { useAuth } from '@/auth/AuthProvider';
 import { useEnums } from '@/hooks/useEnums';
 import { useToast } from '@/components/Toast';
-import { LimitWarningList, OrderActions, OrderStatusTimeline, StatusBadge } from '@/components/domain';
+import {
+  DateRangePicker,
+  LimitWarningList,
+  OrderActions,
+  OrderStatusTimeline,
+  StatusBadge,
+} from '@/components/domain';
 import {
   Alert,
   Badge,
@@ -12,17 +20,40 @@ import {
   Card,
   Field,
   Modal,
+  QuantityStepper,
+  SearchInput,
   Select,
   Skeleton,
+  Switch,
   TextArea,
+  TextInput,
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
 import { t } from '@/i18n/it';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { canPrintOrderForm, orderFormUrl } from '@/lib/orderForm';
-import type { ConditionValue, OrderAction, ProductUnit } from '@/types/api';
+import type { ConditionValue, Order, OrderAction, OrderOverbookedProduct, ProductUnit } from '@/types/api';
 
 type DialogKind = 'approve' | 'reject' | 'pickup' | 'return' | 'mark_no_show' | 'note' | 'reopen' | null;
+
+interface EditItemRow {
+  product_id: number;
+  name: string;
+  quantity: number;
+}
+
+interface EditFormState {
+  pickup_date: string | null;
+  return_date: string | null;
+  pickup_time: string;
+  return_time: string;
+  subject: string;
+  professor: string;
+  motivation: string;
+  notes: string;
+  staff_notes: string;
+  items: EditItemRow[];
+}
 
 export function StaffOrderDetailPage() {
   const { id } = useParams();
@@ -30,6 +61,9 @@ export function StaffOrderDetailPage() {
   const queryClient = useQueryClient();
   const { list, label } = useEnums();
   const { push, pushError } = useToast();
+
+  const { permissions } = useAuth();
+  const canEditFull = permissions['orders.edit_full'];
 
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [comment, setComment] = useState('');
@@ -39,6 +73,13 @@ export function StaffOrderDetailPage() {
   const [conditions, setConditions] = useState<Record<number, ConditionValue>>({});
   const [logTitle, setLogTitle] = useState('');
   const [logProductId, setLogProductId] = useState<number | null>(null);
+
+  /* -------- admin full edit (`orders.edit_full`) -------- */
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditFormState | null>(null);
+  const [editForce, setEditForce] = useState(false);
+  const [editConflicts, setEditConflicts] = useState<OrderOverbookedProduct[] | null>(null);
+  const [productSearch, setProductSearch] = useState('');
 
   const query = useQuery({
     queryKey: ['order', orderId],
@@ -79,6 +120,77 @@ export function StaffOrderDetailPage() {
     onError: pushError,
   });
 
+  const productResults = useQuery({
+    queryKey: ['edit-product-search', productSearch],
+    queryFn: () => api.getProducts({ q: productSearch, per_page: 8 }),
+    enabled: editOpen && productSearch.trim().length >= 2,
+  });
+
+  const editMutation = useMutation({
+    mutationFn: (body: Record<string, unknown>) => api.updateOrder(orderId, body),
+    onSuccess: (updated: Order) => {
+      queryClient.setQueryData(['order', orderId], updated);
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['order-events', orderId] });
+      setEditOpen(false);
+      setEditConflicts(null);
+      setEditForce(false);
+      push(updated.forced_overbook ? t('staff.editForcedSaved') : t('staff.editSaved'), updated.forced_overbook ? 'info' : 'success');
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError && err.code === 'insufficient_availability') {
+        setEditConflicts((err.details?.['products'] as OrderOverbookedProduct[] | undefined) ?? []);
+        return;
+      }
+      pushError(err);
+    },
+  });
+
+  function openEdit() {
+    if (!order) return;
+    setEditForm({
+      pickup_date: order.pickup_date,
+      return_date: order.return_date,
+      pickup_time: order.pickup_time ?? '',
+      return_time: order.return_time ?? '',
+      subject: order.subject ?? '',
+      professor: order.professor ?? '',
+      motivation: order.motivation ?? '',
+      notes: order.notes ?? '',
+      staff_notes: order.staff_notes ?? '',
+      items: order.items.map((item) => ({
+        product_id: item.product_id,
+        name: item.product_name_snapshot ?? item.product.name,
+        quantity: item.quantity,
+      })),
+    });
+    setEditForce(false);
+    setEditConflicts(null);
+    setProductSearch('');
+    setEditOpen(true);
+  }
+
+  function submitEdit() {
+    if (!editForm) return;
+    const body: Record<string, unknown> = {
+      pickup_date: editForm.pickup_date,
+      return_date: editForm.return_date,
+      pickup_time: editForm.pickup_time !== '' ? editForm.pickup_time : null,
+      return_time: editForm.return_time !== '' ? editForm.return_time : null,
+      subject: editForm.subject !== '' ? editForm.subject : null,
+      professor: editForm.professor !== '' ? editForm.professor : null,
+      motivation: editForm.motivation !== '' ? editForm.motivation : null,
+      notes: editForm.notes !== '' ? editForm.notes : null,
+      staff_notes: editForm.staff_notes !== '' ? editForm.staff_notes : null,
+      items: editForm.items.map(({ product_id, quantity }) => ({ product_id, quantity })),
+    };
+    if (editForce) {
+      body['force'] = true;
+    }
+    setEditConflicts(null);
+    editMutation.mutate(body);
+  }
+
   if (query.isLoading) {
     return <Skeleton height={320} radius={6} />;
   }
@@ -94,6 +206,10 @@ export function StaffOrderDetailPage() {
   }
 
   function openDialog(action: OrderAction) {
+    if (action === 'change_dates' || (action === 'edit' && canEditFull)) {
+      openEdit();
+      return;
+    }
     if (action === 'edit') {
       setDialog('note');
       return;
@@ -168,7 +284,17 @@ export function StaffOrderDetailPage() {
       </div>
 
       <div className="vl-row" style={{ marginBottom: 'var(--sp-5)' }}>
-        <OrderActions actions={order.allowed_actions} onAction={openDialog} />
+        {/* change_dates is folded into the full edit panel below */}
+        <OrderActions
+          actions={order.allowed_actions.filter((a) => a !== 'change_dates')}
+          onAction={openDialog}
+        />
+        {canEditFull ? (
+          <Button variant="secondary" size="sm" onClick={openEdit}>
+            <Icon name="edit" size={14} />
+            {t('staff.editOrder')}
+          </Button>
+        ) : null}
         {canPrintOrderForm(order.status) ? (
           <a
             href={orderFormUrl(order.id)}
@@ -564,6 +690,241 @@ export function StaffOrderDetailPage() {
             <TextArea id="generic-comment" value={comment} onChange={(e) => setComment(e.target.value)} />
           </Field>
         </div>
+      </Modal>
+
+      {/* admin full edit (orders.edit_full) */}
+      <Modal
+        open={editOpen && editForm !== null}
+        onClose={() => setEditOpen(false)}
+        title={t('staff.editOrderTitle', { code: order.code ?? `#${order.id}` })}
+        wide
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>
+              {t('app.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              disabled={editForm === null || editForm.items.length === 0}
+              loading={editMutation.isPending}
+              onClick={submitEdit}
+            >
+              {t('app.save')}
+            </Button>
+          </>
+        }
+      >
+        {editForm !== null ? (
+          <div className="vl-stack" style={{ gap: 'var(--sp-4)' }}>
+            <p className="vl-subtle">{t('staff.editOrderLead')}</p>
+
+            {editConflicts !== null ? (
+              <Alert level="danger" icon="alert" title={t('staff.editConflictTitle')}>
+                <ul>
+                  {editConflicts.map((conflict) => (
+                    <li key={conflict.product_id}>
+                      {t('staff.editConflictLine', {
+                        product:
+                          conflict.name ??
+                          editForm.items.find((i) => i.product_id === conflict.product_id)?.name ??
+                          `#${conflict.product_id}`,
+                        requested: conflict.requested,
+                        available: conflict.available,
+                      })}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ marginTop: 'var(--sp-2)' }}>{t('staff.editConflictHint')}</p>
+              </Alert>
+            ) : null}
+
+            <Field label={t('cart.dates')} htmlFor="edit-dates">
+              <DateRangePicker
+                id="edit-dates"
+                pickupDate={editForm.pickup_date}
+                returnDate={editForm.return_date}
+                minDate="2000-01-01"
+                respectClosures={false}
+                onChange={({ pickup_date, return_date }) =>
+                  setEditForm((prev) =>
+                    prev ? { ...prev, pickup_date, return_date } : prev,
+                  )
+                }
+              />
+            </Field>
+            <div className="vl-form-grid vl-form-grid--2">
+              <Field label={t('orders.pickup')} htmlFor="edit-pickup-time">
+                <TextInput
+                  id="edit-pickup-time"
+                  type="time"
+                  value={editForm.pickup_time}
+                  onChange={(e) =>
+                    setEditForm((prev) => (prev ? { ...prev, pickup_time: e.target.value } : prev))
+                  }
+                />
+              </Field>
+              <Field label={t('orders.return')} htmlFor="edit-return-time">
+                <TextInput
+                  id="edit-return-time"
+                  type="time"
+                  value={editForm.return_time}
+                  onChange={(e) =>
+                    setEditForm((prev) => (prev ? { ...prev, return_time: e.target.value } : prev))
+                  }
+                />
+              </Field>
+            </div>
+
+            <fieldset
+              style={{
+                border: '1px solid var(--color-line)',
+                borderRadius: 'var(--radius-sm)',
+                padding: 'var(--sp-4)',
+              }}
+            >
+              <legend style={{ fontWeight: 600, fontSize: 'var(--fs-sm)' }}>
+                {t('staff.editItems')}
+              </legend>
+              <div className="vl-stack" style={{ gap: 'var(--sp-3)' }}>
+                {editForm.items.map((item) => (
+                  <div key={item.product_id} className="vl-row" style={{ justifyContent: 'space-between' }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>{item.name}</span>
+                    <QuantityStepper
+                      value={item.quantity}
+                      onChange={(quantity) =>
+                        setEditForm((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                items: prev.items.map((row) =>
+                                  row.product_id === item.product_id ? { ...row, quantity } : row,
+                                ),
+                              }
+                            : prev,
+                        )
+                      }
+                      label={`${t('cart.quantity')} ${item.name}`}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setEditForm((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                items: prev.items.filter((row) => row.product_id !== item.product_id),
+                              }
+                            : prev,
+                        )
+                      }
+                    >
+                      {t('staff.editRemoveItem')}
+                    </Button>
+                  </div>
+                ))}
+                {editForm.items.length === 0 ? (
+                  <p className="vl-field__error" role="alert">
+                    {t('staff.editNoItems')}
+                  </p>
+                ) : null}
+                <SearchInput
+                  value={productSearch}
+                  onChange={setProductSearch}
+                  label={t('staff.editAddProduct')}
+                  placeholder={t('staff.editSearchProduct')}
+                />
+                {productSearch.trim().length >= 2 ? (
+                  <div className="vl-stack" style={{ gap: 'var(--sp-1)' }}>
+                    {(productResults.data?.data ?? [])
+                      .filter((p) => !editForm.items.some((row) => row.product_id === p.id))
+                      .map((p) => (
+                        <Button
+                          key={p.id}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditForm((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    items: [
+                                      ...prev.items,
+                                      { product_id: p.id, name: p.name, quantity: 1 },
+                                    ],
+                                  }
+                                : prev,
+                            );
+                            setProductSearch('');
+                          }}
+                        >
+                          <Icon name="plus" size={14} />
+                          {p.name}
+                        </Button>
+                      ))}
+                  </div>
+                ) : null}
+              </div>
+            </fieldset>
+
+            <div className="vl-form-grid vl-form-grid--2">
+              <Field label={t('checkout.subject')} htmlFor="edit-subject">
+                <TextInput
+                  id="edit-subject"
+                  value={editForm.subject}
+                  onChange={(e) =>
+                    setEditForm((prev) => (prev ? { ...prev, subject: e.target.value } : prev))
+                  }
+                />
+              </Field>
+              <Field label={t('orders.professorLabel')} htmlFor="edit-professor">
+                <TextInput
+                  id="edit-professor"
+                  value={editForm.professor}
+                  onChange={(e) =>
+                    setEditForm((prev) => (prev ? { ...prev, professor: e.target.value } : prev))
+                  }
+                />
+              </Field>
+            </div>
+            <Field label={t('checkout.motivation')} htmlFor="edit-motivation">
+              <TextArea
+                id="edit-motivation"
+                value={editForm.motivation}
+                onChange={(e) =>
+                  setEditForm((prev) => (prev ? { ...prev, motivation: e.target.value } : prev))
+                }
+              />
+            </Field>
+            <Field label={t('checkout.notes')} htmlFor="edit-notes" optional>
+              <TextArea
+                id="edit-notes"
+                value={editForm.notes}
+                onChange={(e) =>
+                  setEditForm((prev) => (prev ? { ...prev, notes: e.target.value } : prev))
+                }
+              />
+            </Field>
+            <Field label={t('orders.staffNotes')} htmlFor="edit-staff-notes" optional>
+              <TextArea
+                id="edit-staff-notes"
+                value={editForm.staff_notes}
+                onChange={(e) =>
+                  setEditForm((prev) => (prev ? { ...prev, staff_notes: e.target.value } : prev))
+                }
+              />
+            </Field>
+
+            <div>
+              <Switch checked={editForce} onChange={setEditForce} label={t('staff.editForce')} />
+              {editForce ? (
+                <p className="vl-subtle" style={{ marginTop: 'var(--sp-2)' }}>
+                  {t('staff.editForceWarning')}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </>
   );

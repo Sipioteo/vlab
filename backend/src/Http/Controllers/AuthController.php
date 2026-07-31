@@ -130,8 +130,10 @@ final class AuthController extends Controller
         return $this->json($response, [
             'user' => UserResource::toArray($user, $user->isStaff() ? $user : null),
             'permissions' => self::permissions($user),
+            // `blocking` MUST be present: the SPA gate keys the blocking modal off
+            // it, and a missing flag reads as "nothing to accept" (§5.5).
             'pending_regulations' => array_map(
-                static fn ($r) => RegulationResource::pendingItem($r),
+                static fn ($r) => RegulationResource::pendingItem($r, true),
                 $this->regulations->pendingGlobalFor($user)
             ),
             'cart_items_count' => $cartCount,
@@ -177,6 +179,7 @@ final class AuthController extends Controller
             'regulations.delete' => $is('admin'),
             'closures.manage' => $is('technician', 'admin'),
             'orders.reopen' => $is('admin'),
+            'orders.edit_full' => $is('admin'),
             'audit.view' => $is('admin'),
         ];
     }
@@ -198,7 +201,7 @@ final class AuthController extends Controller
             'refresh_expires_at' => $refresh['expires_at'],
             'user' => UserResource::toArray($user, $user->isStaff() ? $user : null),
             'pending_regulations' => array_map(
-                static fn ($r) => RegulationResource::pendingItem($r),
+                static fn ($r) => RegulationResource::pendingItem($r, true),
                 $this->regulations->pendingGlobalFor($user)
             ),
         ];

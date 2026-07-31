@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { StatCard } from '@/components/charts';
+import { IcalFeedCard } from '@/components/IcalFeedCard';
 import { Button, Card, Skeleton } from '@/components/ui';
 import { StatusBadge } from '@/components/domain';
 import { t } from '@/i18n/it';
@@ -49,6 +50,11 @@ export function StaffCalendarPage() {
         <StatCard label={t('orders.pickup')} value={calendar.data?.totals.pickups ?? '—'} />
         <StatCard label={t('orders.return')} value={calendar.data?.totals.returns ?? '—'} />
         <StatCard label={t('staff.overdue')} value={calendar.data?.totals.overdue ?? '—'} tone="danger" />
+      </div>
+
+      {/* Subscribe the lab's shared calendar to this feed and stop retyping dates. */}
+      <div style={{ marginBottom: 'var(--sp-5)' }}>
+        <IcalFeedCard staff />
       </div>
 
       {calendar.isLoading ? (

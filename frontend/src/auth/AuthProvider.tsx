@@ -34,6 +34,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   'regulations.delete': false,
   'closures.manage': false,
   'orders.reopen': false,
+  'orders.edit_full': false,
   'audit.view': false,
 };
 

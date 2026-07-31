@@ -1672,6 +1672,100 @@
   padding: var(--sp-4);
 }
 
+/* ------------------------------------------------- blocking regulation gate */
+
+/* The shell keeps rendering behind the gate but nothing in it can be reached. */
+.vl-approot[data-blocked='true'] {
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(0.75);
+}
+
+.vl-gate-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 15, 26, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  z-index: 300;
+  animation: vl-fade 160ms ease-out;
+}
+.vl-gate {
+  background: var(--color-surface);
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 720px;
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+  animation: vl-rise 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.vl-gate:focus {
+  outline: none;
+}
+.vl-gate__head {
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  border-bottom: var(--hairline);
+}
+.vl-gate__head h2 {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  margin: var(--sp-1) 0 var(--sp-2);
+}
+.vl-gate__head .vl-lead {
+  margin: 0;
+}
+.vl-gate__body {
+  padding: var(--sp-5);
+  overflow-y: auto;
+  flex: 1;
+}
+.vl-gate__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: var(--hairline);
+  background: var(--color-surface-alt);
+  flex-wrap: wrap;
+}
+.vl-gate__progress {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--color-ink-muted);
+}
+
+/* ------------------------------------------------------------- iCal feed */
+
+.vl-icalrow {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.vl-icalrow input {
+  flex: 1 1 260px;
+  min-width: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--fs-xs);
+}
+.vl-ical-howto {
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--color-ink-muted);
+}
+.vl-ical-howto li + li {
+  margin-top: var(--sp-1);
+}
+
 /* ------------------------------------------------------------ progress bar */
 
 .vl-meter {

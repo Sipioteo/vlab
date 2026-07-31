@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { useAuth } from '@/auth/AuthProvider';
 import { useToast } from '@/components/Toast';
+import { IcalFeedCard } from '@/components/IcalFeedCard';
 import { Badge, Button, Card, Field, TextInput } from '@/components/ui';
 import { t } from '@/i18n/it';
 import { formatDateTime } from '@/lib/format';
@@ -100,6 +101,8 @@ export function ProfilePage() {
               </div>
             </form>
           </Card>
+
+          <IcalFeedCard />
         </div>
 
         <div className="vl-stack">

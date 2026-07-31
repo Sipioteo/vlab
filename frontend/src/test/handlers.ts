@@ -1,6 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import * as f from './fixtures';
-import type { Cart, MeResponse, Role } from '@/types/api';
+import type { Cart, MeResponse, PendingRegulation, Role } from '@/types/api';
 
 /**
  * Mutable msw state — tests tweak it through `mockState` before rendering.
@@ -13,7 +13,13 @@ export const mockState = {
   ldapMode: 'fake' as 'fake' | 'real',
   refreshCalls: 0,
   loginCalls: 0,
+  pendingRegulations: [] as PendingRegulation[],
+  acceptedRegulationIds: [] as number[],
+  icalToken: 'a'.repeat(64),
+  icalRotateCalls: 0,
 };
+
+const DEFAULT_ICAL_TOKEN = 'a'.repeat(64);
 
 export function resetMockState(): void {
   mockState.role = 'student';
@@ -23,11 +29,17 @@ export function resetMockState(): void {
   mockState.ldapMode = 'fake';
   mockState.refreshCalls = 0;
   mockState.loginCalls = 0;
+  mockState.pendingRegulations = [];
+  mockState.acceptedRegulationIds = [];
+  mockState.icalToken = DEFAULT_ICAL_TOKEN;
+  mockState.icalRotateCalls = 0;
 }
 
 function currentMe(): MeResponse {
-  if (mockState.me) return mockState.me;
-  return f.makeMe(mockState.role ?? 'student');
+  if (mockState.me) return { ...mockState.me, pending_regulations: mockState.pendingRegulations };
+  return f.makeMe(mockState.role ?? 'student', {
+    pending_regulations: mockState.pendingRegulations,
+  });
 }
 
 function currentCart(): Cart {
@@ -427,16 +439,39 @@ export const handlers: HttpHandler[] = [
   ),
 
   /* ---------------------------------------------------------- regulations */
-  http.get(p('/me/regulations/pending'), () => HttpResponse.json({ data: [], meta: null })),
-  http.post(p('/me/regulations/:id/accept'), ({ params }) =>
-    HttpResponse.json({
+  http.get(p('/me/regulations/pending'), () =>
+    HttpResponse.json({ data: mockState.pendingRegulations, meta: null }),
+  ),
+  http.post(p('/me/regulations/:id/accept'), ({ params }) => {
+    const id = Number(params['id']);
+    mockState.acceptedRegulationIds.push(id);
+    mockState.pendingRegulations = mockState.pendingRegulations.filter((reg) => reg.id !== id);
+    return HttpResponse.json({
       accepted: true,
-      regulation_id: Number(params['id']),
+      regulation_id: id,
       version: 3,
       accepted_at: '2026-07-31T09:10:00Z',
-      pending_regulations: [],
+      pending_regulations: mockState.pendingRegulations,
+    });
+  }),
+
+  /* ------------------------------------------------------------ iCal feed */
+  http.get(p('/me/ical'), () =>
+    HttpResponse.json({
+      token: mockState.icalToken,
+      feed_url: `http://localhost:8081/api/v1/ical/${mockState.icalToken}.ics`,
+      generated_at: '2026-07-30T09:00:00Z',
     }),
   ),
+  http.post(p('/me/ical/rotate'), () => {
+    mockState.icalRotateCalls += 1;
+    mockState.icalToken = `rotated${'b'.repeat(58)}`;
+    return HttpResponse.json({
+      token: mockState.icalToken,
+      feed_url: `http://localhost:8081/api/v1/ical/${mockState.icalToken}.ics`,
+      generated_at: '2026-07-31T09:00:00Z',
+    });
+  }),
   http.get(p('/regulations'), () =>
     HttpResponse.json({
       data: [f.globalRegulation, f.vrRegulation],

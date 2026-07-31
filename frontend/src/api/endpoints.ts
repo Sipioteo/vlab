@@ -9,6 +9,7 @@ import type {
   Closure,
   Collection,
   HealthResponse,
+  IcalFeed,
   LateReturnsResponse,
   LoansOverTimeResponse,
   LoginResponse,
@@ -197,6 +198,14 @@ export const orderAction = (id: number, action: string, body: Record<string, unk
 
 export const getStaffCalendar = (query: Q) =>
   apiFetch<StaffCalendarResponse>(p('/orders/calendar') + buildQuery(query));
+
+/* --------------------------------------------------------------- iCal feed */
+
+/** Current subscription URL; the backend mints the token on first read. */
+export const getIcalFeed = () => apiFetch<IcalFeed>(p('/me/ical'));
+
+/** New token — the previous URL stops resolving immediately. */
+export const rotateIcalFeed = () => apiFetch<IcalFeed>(p('/me/ical/rotate'), { method: 'POST' });
 
 /* -------------------------------------------------------------- regulations */
 

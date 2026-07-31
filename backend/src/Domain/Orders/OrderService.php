@@ -1140,6 +1140,188 @@ class OrderService
         });
     }
 
+    /**
+     * Admin-only full edit (`orders.edit_full`): any submitted order, past,
+     * present or future — dates, slots, items, subject, motivation, professor,
+     * notes. Status is NOT touched here: corrections go through the state
+     * machine endpoints (reopen & co.).
+     *
+     * Availability is always re-checked on the new configuration excluding the
+     * order itself; a shortfall raises 422 `insufficient_availability` unless
+     * `force: true` is passed (explicit physical-reality override). A forced
+     * overbooking save is flagged in the returned tuple, in the order event
+     * meta and in the audit log.
+     *
+     * @param array<string,mixed> $payload
+     * @param bool $datesOnly restrict to pickup/return date+time (change_dates)
+     * @return array{0:Order, 1:?array} [order, overbooked products or null]
+     */
+    public function editOrderFull(Order $order, User $actor, array $payload, bool $datesOnly = false): array
+    {
+        if ($actor->role !== 'admin') {
+            throw ApiException::forbidden('La modifica completa dei prestiti richiede il permesso orders.edit_full.');
+        }
+        if ($order->status === 'draft') {
+            throw new ApiException(409, 'invalid_transition', 'Una bozza si modifica dal carrello, non da qui.', [
+                'current_status' => 'draft',
+                'action' => $datesOnly ? 'change_dates' : 'edit',
+                'allowed_actions' => $this->machine->allowedActions($order, $actor),
+            ]);
+        }
+        $force = (bool) ($payload['force'] ?? false);
+
+        return Capsule::connection()->transaction(function () use ($order, $actor, $payload, $datesOnly, $force) {
+            $this->lockForAvailability();
+            $changes = [];
+
+            foreach (['pickup_date', 'return_date'] as $f) {
+                if (array_key_exists($f, $payload) && $payload[$f] !== null) {
+                    if (!Dates::isValidDate((string) $payload[$f])) {
+                        throw ApiException::validation([$f => ['Formato data non valido (YYYY-MM-DD).']]);
+                    }
+                    if ((string) $payload[$f] !== (string) Dates::datePart($order->{$f})) {
+                        $changes[$f] = ['before' => Dates::datePart($order->{$f}), 'after' => (string) $payload[$f]];
+                        $order->{$f} = (string) $payload[$f];
+                    }
+                }
+            }
+            if (Dates::datePart($order->return_date) < Dates::datePart($order->pickup_date)) {
+                throw ApiException::validation(['return_date' => ['La data di riconsegna deve essere successiva o uguale al ritiro.']]);
+            }
+            foreach (['pickup_time', 'return_time'] as $f) {
+                if (array_key_exists($f, $payload) && $payload[$f] !== null) {
+                    if (!Dates::isValidTime((string) $payload[$f])) {
+                        throw ApiException::validation([$f => ['Formato orario non valido (HH:MM).']]);
+                    }
+                    if ((string) $payload[$f] !== (string) $order->{$f}) {
+                        $changes[$f] = ['before' => $order->{$f}, 'after' => (string) $payload[$f]];
+                        $order->{$f} = (string) $payload[$f];
+                    }
+                }
+            }
+
+            if (!$datesOnly) {
+                foreach (['subject', 'professor', 'motivation', 'notes', 'staff_notes'] as $f) {
+                    if (array_key_exists($f, $payload)) {
+                        $value = $payload[$f] !== null ? (string) $payload[$f] : null;
+                        if ($value !== $order->{$f}) {
+                            $changes[$f] = ['before' => $order->{$f}, 'after' => $value];
+                            $order->{$f} = $value;
+                        }
+                    }
+                }
+
+                if (isset($payload['items']) && is_array($payload['items'])) {
+                    $items = $this->normalizeItems($payload['items']);
+                    if ($items === [] || count($items) > 50) {
+                        throw ApiException::validation(['items' => ['Specificare da 1 a 50 articoli.']]);
+                    }
+                    foreach ($items as $item) {
+                        if ($item['product'] === null) {
+                            throw ApiException::validation(['items' => ['Prodotto non trovato.']]);
+                        }
+                    }
+                    $existing = OrderItem::where('order_id', $order->id)->orderBy('id')->get();
+                    $before = $existing->map(static fn ($i) => [
+                        'product_id' => (int) $i->product_id,
+                        'quantity' => (int) $i->quantity,
+                    ])->values()->all();
+                    $byProduct = $existing->keyBy('product_id');
+                    $keptProductIds = [];
+                    foreach ($items as $item) {
+                        $keptProductIds[] = $item['product_id'];
+                        $row = $byProduct->get($item['product_id']);
+                        if ($row !== null) {
+                            // Keep the row (unit assignment history hangs off it).
+                            $row->quantity = $item['quantity'];
+                            if ($item['notes'] !== null) {
+                                $row->notes = mb_substr($item['notes'], 0, 255);
+                            }
+                            $row->save();
+                        } else {
+                            OrderItem::create([
+                                'order_id' => $order->id,
+                                'product_id' => $item['product_id'],
+                                'quantity' => $item['quantity'],
+                                'notes' => $item['notes'] !== null ? mb_substr($item['notes'], 0, 255) : null,
+                                'product_name_snapshot' => $item['product']->name,
+                                'product_brand_snapshot' => $item['product']->brand,
+                            ]);
+                        }
+                    }
+                    foreach ($existing as $row) {
+                        if (!in_array((int) $row->product_id, $keptProductIds, true)) {
+                            OrderItemUnit::where('order_item_id', $row->id)->delete();
+                            $row->delete();
+                        }
+                    }
+                    $after = array_map(static fn ($i) => [
+                        'product_id' => $i['product_id'],
+                        'quantity' => $i['quantity'],
+                    ], $items);
+                    if ($before !== $after) {
+                        $changes['items'] = ['before' => $before, 'after' => $after];
+                    }
+                }
+            }
+
+            // ---- availability on the new configuration, excluding this order.
+            $overbook = null;
+            $short = $this->orderAvailabilityShortfall($order);
+            if ($short !== []) {
+                if (!$force) {
+                    throw new ApiException(422, 'insufficient_availability', 'La disponibilità non è sufficiente per alcuni prodotti nel periodo selezionato.', [
+                        'products' => $short,
+                    ]);
+                }
+                $overbook = $short;
+            }
+
+            // ---- limits re-evaluation: recorded on the order, never blocking
+            // an admin correction (checkout-style flags stay truthful).
+            $items = $this->cartItemsNormalized($order);
+            $owner = User::find($order->user_id);
+            $availabilityByProduct = $this->availability->availableForRange(
+                array_map(static fn ($i) => $i['product_id'], $items),
+                (string) Dates::datePart($order->pickup_date),
+                (string) Dates::datePart($order->return_date),
+                (int) $order->id
+            );
+            $violations = $owner !== null ? $this->limits->evaluate(
+                $owner,
+                $items,
+                Dates::datePart($order->pickup_date),
+                $order->pickup_time,
+                Dates::datePart($order->return_date),
+                $order->return_time,
+                (int) $order->id,
+                $availabilityByProduct
+            ) : [];
+            $order->exceeds_limits = LimitsEvaluator::hasSoft($violations);
+            $order->limit_violations = json_encode($violations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $order->save();
+            $this->recountItems($order);
+
+            if ($changes !== []) {
+                $meta = ['changes' => $changes, 'edit_full' => true];
+                if ($overbook !== null) {
+                    $meta['forced'] = true;
+                    $meta['overbooked_products'] = $overbook;
+                }
+                $this->writeEvent($order, (string) $order->status, (string) $order->status, 'edit', $actor, $payload['comment'] ?? null, $meta);
+                $auditChanges = [
+                    'before' => array_map(static fn ($c) => $c['before'] ?? null, $changes),
+                    'after' => array_map(static fn ($c) => $c['after'] ?? null, $changes),
+                ];
+                if ($overbook !== null) {
+                    $auditChanges['forced_overbook'] = $overbook;
+                }
+                AuditLogger::log($actor, 'order.edit_full', 'Order', (string) $order->id, $auditChanges);
+            }
+            return [$order->refresh(), $overbook];
+        });
+    }
+
     public function addNotes(Order $order, User $actor, ?string $staffNotes, ?string $comment): Order
     {
         if ($staffNotes !== null) {
@@ -1155,15 +1337,31 @@ class OrderService
     /** 409 insufficient_availability if this order's own demand no longer fits. */
     private function assertOrderAvailability(Order $order): void
     {
+        $short = $this->orderAvailabilityShortfall($order);
+        if ($short !== []) {
+            throw new ApiException(409, 'insufficient_availability', 'La disponibilità non è più sufficiente per alcuni prodotti.', [
+                'products' => $short,
+            ]);
+        }
+    }
+
+    /**
+     * Products of the order whose demand exceeds availability over the order's
+     * own range, excluding the order itself.
+     *
+     * @return array<int,array{product_id:int, name:?string, requested:int, available:int}>
+     */
+    private function orderAvailabilityShortfall(Order $order): array
+    {
         $pickupDate = Dates::datePart($order->pickup_date);
         $returnDate = Dates::datePart($order->return_date);
         if ($pickupDate === null || $returnDate === null) {
-            return;
+            return [];
         }
         $items = OrderItem::where('order_id', $order->id)->get();
         $productIds = $items->pluck('product_id')->map(static fn ($v) => (int) $v)->all();
         if ($productIds === []) {
-            return;
+            return [];
         }
         $availability = $this->availability->availableForRange($productIds, $pickupDate, $returnDate, (int) $order->id);
         $short = [];
@@ -1172,16 +1370,13 @@ class OrderService
             if ((int) $item->quantity > $info['available']) {
                 $short[] = [
                     'product_id' => (int) $item->product_id,
+                    'name' => $item->product_name_snapshot ?? $item->product?->name,
                     'requested' => (int) $item->quantity,
-                    'available' => $info['available'],
+                    'available' => (int) $info['available'],
                 ];
             }
         }
-        if ($short !== []) {
-            throw new ApiException(409, 'insufficient_availability', 'La disponibilità non è più sufficiente per alcuni prodotti.', [
-                'products' => $short,
-            ]);
-        }
+        return $short;
     }
 
     // ---------------------------------------------------------- overdue sweep
