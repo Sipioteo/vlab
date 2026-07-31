@@ -903,7 +903,7 @@ start_backend() {
 wait_for_health() {
   local url="http://127.0.0.1:$BACKEND_PORT/api/v1/health"
   local i=0
-  info "attendo che il backend risponda su $url…"
+  info "attendo che il backend risponda su ${url}…"
   while [ "$i" -lt 60 ]; do
     if command -v curl >/dev/null 2>&1; then
       if curl -fsS --max-time 2 "$url" >/dev/null 2>&1; then ok "backend pronto"; return 0; fi
@@ -924,7 +924,7 @@ start_frontend() {
   require_free_port "$FRONTEND_PORT" "frontend" "--frontend-port"
   mkdir -p "$RUN_DIR" "$LOG_DIR"
   : > "$FRONTEND_LOG"
-  info "avvio frontend su http://localhost:$FRONTEND_PORT…"
+  info "avvio frontend su http://localhost:${FRONTEND_PORT}…"
   (
     cd "$FRONTEND_DIR"
     VITE_API_TARGET="http://127.0.0.1:$BACKEND_PORT" \
