@@ -1,0 +1,26 @@
+# Dependencies
+backend/vendor/
+frontend/node_modules/
+
+# Build
+frontend/dist/
+
+# Runtime
+backend/database/*.sqlite
+backend/storage/
+backend/storage/logs/
+.run/
+*.log
+.phpunit.result.cache
+
+# Env
+.env
+backend/.env
+frontend/.env.local
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+backend/.phpunit.cache/
+backend/database/*.sqlite-journal
