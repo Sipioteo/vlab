@@ -19,6 +19,7 @@ export type OrderStatus =
 
 export type OrderAction =
   | 'submit'
+  | 'create'
   | 'approve'
   | 'reject'
   | 'cancel'
@@ -339,6 +340,11 @@ export interface Order extends OrderSummary {
   /** present only after an admin `force: true` save that overbooked stock */
   forced_overbook?: boolean;
   overbooked_products?: OrderOverbookedProduct[];
+  /**
+   * POST /orders/manual only: regulations the target student has not accepted
+   * yet, so the operator can have the printed module signed.
+   */
+  pending_regulations?: PendingRegulation[];
 }
 
 export interface OrderOverbookedProduct {
@@ -457,6 +463,8 @@ export interface Permissions {
   'products.manage': boolean;
   'orders.manage': boolean;
   'orders.create': boolean;
+  /** staff-side manual loan creation (technician + admin) */
+  'orders.create_manual': boolean;
   'logs.create': boolean;
   'settings.manage': boolean;
   'settings.view': boolean;

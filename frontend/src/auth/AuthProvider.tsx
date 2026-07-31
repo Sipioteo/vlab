@@ -23,6 +23,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   'products.manage': false,
   'orders.manage': false,
   'orders.create': false,
+  'orders.create_manual': false,
   'logs.create': false,
   'settings.manage': false,
   'settings.view': false,

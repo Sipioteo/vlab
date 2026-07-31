@@ -23,6 +23,7 @@ import { ForbiddenPage, NotFoundPage } from '@/pages/ErrorPages';
 
 import { StaffDashboardPage } from '@/pages/staff/StaffDashboardPage';
 import { StaffOrdersPage } from '@/pages/staff/StaffOrdersPage';
+import { StaffOrderCreatePage } from '@/pages/staff/StaffOrderCreatePage';
 import { StaffOrderDetailPage } from '@/pages/staff/StaffOrderDetailPage';
 import { StaffCalendarPage } from '@/pages/staff/StaffCalendarPage';
 import { AdminProductsPage } from '@/pages/staff/AdminProductsPage';
@@ -156,6 +157,16 @@ export function App() {
               <RequireRole anyOf={['orders.manage']}>
                 <Staff>
                   <StaffOrdersPage />
+                </Staff>
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/gestione/ordini/nuovo"
+            element={
+              <RequireRole anyOf={['orders.create_manual']}>
+                <Staff>
+                  <StaffOrderCreatePage />
                 </Staff>
               </RequireRole>
             }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
+import { usePermission } from '@/auth/AuthProvider';
 import { useEnums } from '@/hooks/useEnums';
 import { useToast } from '@/components/Toast';
 import { OrderActions, StatusBadge } from '@/components/domain';
@@ -30,6 +31,7 @@ export function StaffOrdersPage() {
   const queryClient = useQueryClient();
   const { label } = useEnums();
   const { push, pushError } = useToast();
+  const canCreateManual = usePermission('orders.create_manual');
 
   const [drawerOrderId, setDrawerOrderId] = useState<number | null>(null);
   const [rejectOrder, setRejectOrder] = useState<OrderSummary | null>(null);
@@ -119,6 +121,14 @@ export function StaffOrdersPage() {
         <p className="vl-eyebrow">{t('staff.area')}</p>
         <h1>{t('staff.ordersTitle')}</h1>
         <p className="vl-lead">{t('staff.ordersLead')}</p>
+        {canCreateManual ? (
+          <div className="vl-row" style={{ marginTop: 'var(--sp-3)' }}>
+            <Link to="/gestione/ordini/nuovo" className="vl-btn vl-btn--primary">
+              <Icon name="plus" size={14} />
+              {t('staff.newOrder')}
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="vl-toolbar" style={{ position: 'static' }}>

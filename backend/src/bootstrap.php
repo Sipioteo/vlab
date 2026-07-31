@@ -187,7 +187,9 @@ function vlab_create_app(): App
         $c->get(RegulationService::class),
         $c->get(CalendarService::class),
         $c->get(OrderPdfService::class),
-        $c->get(JwtService::class)
+        $c->get(JwtService::class),
+        $c->get(LdapAuthenticatorInterface::class),
+        $c->get(RoleResolver::class)
     ));
     $container->set(RegulationController::class, static fn (Container $c) => new RegulationController(
         $c->get(RegulationService::class),
@@ -292,6 +294,8 @@ function vlab_create_app(): App
             ->add(new RequireRegulationAcceptanceMiddleware($container->get(RegulationService::class), $container->get(OrderService::class)))
             ->add($studentOnly)
             ->add($authRequired);
+        // Staff manual loan creation (`orders.create_manual`: technician + admin).
+        $group->post('/orders/manual', [OrderController::class, 'storeManual'])->add($techAdmin)->add($authRequired);
         $group->get('/orders/calendar', [OrderController::class, 'calendar'])->add($staff)->add($authRequired);
         $group->get('/orders', [OrderController::class, 'index'])->add($authRequired);
         $group->get('/orders/{id:[0-9]+}', [OrderController::class, 'show'])->add($authRequired);

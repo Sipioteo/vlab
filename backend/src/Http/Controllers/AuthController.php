@@ -168,6 +168,7 @@ final class AuthController extends Controller
             'products.manage' => $is('technician', 'admin'),
             'orders.manage' => $is('assistant', 'technician', 'admin'),
             'orders.create' => $is('student'),
+            'orders.create_manual' => $is('technician', 'admin'),
             'logs.create' => $is('assistant', 'technician', 'admin'),
             'settings.manage' => $is('admin'),
             'settings.view' => $is('assistant', 'technician', 'admin'),

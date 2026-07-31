@@ -109,6 +109,7 @@ final class Enums
 
     public const ACTION_LABELS = [
         'submit' => 'Inviato',
+        'create' => 'Creato',
         'approve' => 'Approvato',
         'reject' => 'Rifiutato',
         'cancel' => 'Annullato',

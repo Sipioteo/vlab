@@ -408,6 +408,27 @@ export const it = {
       'In quelle date questa attrezzatura non è libera: cambia le date, riduci le quantità o forza la modifica.',
     editForcedSaved: 'Modifica forzata salvata: il prestito è sovraprenotato.',
     editSaved: 'Prestito aggiornato.',
+    newOrder: 'Nuovo prestito',
+    newOrderTitle: 'Nuovo prestito manuale',
+    newOrderLead:
+      'Registra un prestito per conto di uno studente: chi si presenta allo sportello, una prenotazione al telefono o una correzione a posteriori.',
+    newOrderStudent: 'Studente',
+    newOrderSearchUser: 'Cerca lo studente per nome, username o matricola…',
+    newOrderNoUsers: 'Nessun utente trovato.',
+    newOrderChangeUser: 'Cambia studente',
+    newOrderInitialStatus: 'Stato iniziale',
+    newOrderStatusApproved: 'Consegna subito (approvato)',
+    newOrderStatusPending: 'In attesa di conferma',
+    newOrderCreate: 'Crea prestito',
+    newOrderCreated: 'Prestito creato. Stampa il modulo per la firma.',
+    newOrderForcedCreated: 'Prestito creato forzando la disponibilità: risulterà sovraprenotato.',
+    newOrderRegulationWarning:
+      'Attenzione: lo studente non ha ancora accettato il regolamento vigente — fallo firmare sul modulo.',
+    newOrderForce: 'Forza la creazione anche senza disponibilità',
+    newOrderForceWarning:
+      'Da usare solo per registrare quello che è successo davvero: il prestito risulterà sovraprenotato per queste date.',
+    newOrderConflictHint:
+      'In quelle date questa attrezzatura non è libera: cambia le date, riduci le quantità o (da amministratore) forza la creazione.',
     productName: 'Nome attrezzatura',
     productsTitle: 'Gestione attrezzature',
     productsLead: 'Aggiungi, correggi o togli dal catalogo.',

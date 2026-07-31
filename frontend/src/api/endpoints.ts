@@ -182,6 +182,10 @@ export const clearCart = () => apiFetch<Cart>(p('/cart'), { method: 'DELETE' });
 export const createOrder = (body: Record<string, unknown>) =>
   apiFetch<Order>(p('/orders'), { method: 'POST', body });
 
+/** Staff manual loan creation (`orders.create_manual`). */
+export const createManualOrder = (body: Record<string, unknown>) =>
+  apiFetch<Order>(p('/orders/manual'), { method: 'POST', body });
+
 export const getOrders = (query: Q = {}) =>
   apiFetch<OrderListResponse>(p('/orders') + buildQuery(query));
 

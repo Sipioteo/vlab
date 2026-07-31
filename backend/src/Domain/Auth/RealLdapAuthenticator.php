@@ -12,7 +12,7 @@ use App\Domain\Settings\SettingsRepository;
  * is empty (SPEC §4.2). Guarded so the platform runs without ext-ldap when
  * LDAP_MODE=fake: the extension check happens on use, not at class load.
  */
-class RealLdapAuthenticator implements LdapAuthenticatorInterface
+class RealLdapAuthenticator implements LdapAuthenticatorInterface, LdapDirectoryLookupInterface
 {
     /** @var array<string,mixed> */
     private array $config;
@@ -73,15 +73,62 @@ class RealLdapAuthenticator implements LdapAuthenticatorInterface
     {
         $p = $this->resolvedParams();
         $conn = $this->connect($p);
+        $this->serviceBind($conn, $p);
 
-        // Service bind (anonymous when bind_dn empty).
+        $entry = $this->searchUserEntry($conn, $p, $username);
+        if ($entry === null) {
+            return null;
+        }
+        $userDn = (string) $entry['dn'];
+
+        // Re-bind as the found entry with the supplied password.
+        if (!@ldap_bind($conn, $userDn, $password)) {
+            return null;
+        }
+
+        return $this->hydrate($conn, $p, $entry, $username);
+    }
+
+    /**
+     * Directory lookup with the service bind only — no user credentials.
+     * Used to provision a user for a staff-created manual loan.
+     */
+    public function lookupUsername(string $username): ?LdapUser
+    {
+        $p = $this->resolvedParams();
+        $conn = $this->connect($p);
+        $this->serviceBind($conn, $p);
+
+        $entry = $this->searchUserEntry($conn, $p, $username);
+        if ($entry === null) {
+            return null;
+        }
+        return $this->hydrate($conn, $p, $entry, $username);
+    }
+
+    /**
+     * Service bind (anonymous when bind_dn empty).
+     *
+     * @param resource|\LDAP\Connection $conn
+     * @param array<string,mixed> $p
+     */
+    private function serviceBind($conn, array $p): void
+    {
         $bound = $p['bind_dn'] !== ''
             ? @ldap_bind($conn, $p['bind_dn'], $p['bind_password'])
             : @ldap_bind($conn);
         if (!$bound) {
             throw new LdapUnavailableException('LDAP service bind failed: ' . ldap_error($conn));
         }
+    }
 
+    /**
+     * @param resource|\LDAP\Connection $conn
+     * @param array<string,mixed> $p
+     * @return array<string,mixed>|null the single matching entry, or null
+     */
+    private function searchUserEntry($conn, array $p, string $username): ?array
+    {
         $filter = sprintf($p['user_filter'], ldap_escape($username, '', LDAP_ESCAPE_FILTER));
         $search = @ldap_search($conn, $p['base_dn'], $filter);
         if ($search === false) {
@@ -91,13 +138,17 @@ class RealLdapAuthenticator implements LdapAuthenticatorInterface
         if (!is_array($entries) || (int) ($entries['count'] ?? 0) !== 1) {
             return null;
         }
-        $entry = $entries[0];
-        $userDn = (string) $entry['dn'];
+        return $entries[0];
+    }
 
-        // Re-bind as the found entry with the supplied password.
-        if (!@ldap_bind($conn, $userDn, $password)) {
-            return null;
-        }
+    /**
+     * @param resource|\LDAP\Connection $conn
+     * @param array<string,mixed> $p
+     * @param array<string,mixed> $entry
+     */
+    private function hydrate($conn, array $p, array $entry, string $username): LdapUser
+    {
+        $userDn = (string) $entry['dn'];
 
         $attr = static function (array $entry, string $name): ?string {
             $name = strtolower($name);

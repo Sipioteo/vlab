@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Auth\JwtService;
+use App\Domain\Auth\LdapAuthenticatorInterface;
+use App\Domain\Auth\LdapDirectoryLookupInterface;
+use App\Domain\Auth\LdapUnavailableException;
+use App\Domain\Auth\RoleResolver;
 use App\Domain\Calendar\CalendarService;
 use App\Domain\Orders\OrderPdfService;
 use App\Domain\Orders\OrderService;
@@ -13,6 +17,7 @@ use App\Domain\Regulations\RegulationService;
 use App\Http\Middleware\AuthenticateMiddleware;
 use App\Http\Resources\OrderEventResource;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\RegulationResource;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -33,6 +38,8 @@ final class OrderController extends Controller
         private CalendarService $calendar,
         private OrderPdfService $pdf,
         private JwtService $jwt,
+        private LdapAuthenticatorInterface $ldap,
+        private RoleResolver $roleResolver,
     ) {
     }
 
@@ -49,6 +56,117 @@ final class OrderController extends Controller
         );
         return $this->json($response, OrderResource::detail($order, $user, $this->machine, $this->regulations), 201)
             ->withHeader('Location', '/api/v1/orders/' . $order->id);
+    }
+
+    /**
+     * POST /orders/manual — staff creates a loan on behalf of a student
+     * (`orders.create_manual`: technician + admin). See OrderService::createManual.
+     */
+    public function storeManual(Request $request, Response $response): Response
+    {
+        $actor = $this->requireUser($request);
+        $body = $this->body($request);
+        $target = $this->resolveTargetUser($body);
+        [$order, $overbook] = $this->orders->createManual($actor, $target, $body);
+        $data = $this->detailWithOverbook($order, $actor, $overbook);
+        // Regulation acceptance is not enforced for a staff-created loan (the
+        // signature on the printed module covers it), but the operator is told
+        // what the student has not accepted yet.
+        $data['pending_regulations'] = $this->pendingRegulationsFor($target, $order);
+        return $this->json($response, $data, 201)
+            ->withHeader('Location', '/api/v1/orders/' . $order->id);
+    }
+
+    /**
+     * user_id → existing local user; username → local user, else directory
+     * lookup + first-login-style provisioning (when the active authenticator
+     * supports service-bind lookups). Unknown → 422 `user_not_found`.
+     *
+     * @param array<string,mixed> $body
+     */
+    private function resolveTargetUser(array $body): User
+    {
+        if (isset($body['user_id']) && $body['user_id'] !== null && $body['user_id'] !== '') {
+            $user = User::find((int) $body['user_id']);
+            if ($user === null) {
+                throw new ApiException(422, 'user_not_found', 'Utente non trovato.');
+            }
+            return $user;
+        }
+
+        $username = isset($body['username']) ? trim((string) $body['username']) : '';
+        if ($username === '' || mb_strlen($username) > 191) {
+            throw ApiException::validation(['username' => ['Indicare user_id oppure username.']]);
+        }
+
+        $user = User::withTrashed()->where('ldap_uid', $username)->first();
+        if ($user !== null && $user->trashed()) {
+            throw new ApiException(403, 'account_disabled', 'Account disabilitato.');
+        }
+        if ($user !== null) {
+            return $user;
+        }
+
+        if (!$this->ldap instanceof LdapDirectoryLookupInterface) {
+            throw new ApiException(422, 'user_not_found', "Nessun utente \"{$username}\" trovato.");
+        }
+        try {
+            $ldapUser = $this->ldap->lookupUsername($username);
+        } catch (LdapUnavailableException $e) {
+            throw new ApiException(503, 'ldap_unavailable', 'Il servizio di autenticazione non è raggiungibile.');
+        }
+        if ($ldapUser === null) {
+            throw new ApiException(422, 'user_not_found', "Nessun utente \"{$username}\" trovato.");
+        }
+
+        // Provision exactly like the first login does (AuthController::login),
+        // minus last_login_at: this user has never signed in.
+        $role = $this->roleResolver->resolve($ldapUser, null);
+        $user = new User([
+            'ldap_uid' => $ldapUser->uid,
+            'role' => $role,
+            'role_source' => 'ldap',
+            'is_active' => true,
+            'token_version' => 1,
+        ]);
+        $user->email = $ldapUser->email;
+        $user->first_name = $ldapUser->firstName;
+        $user->last_name = $ldapUser->lastName;
+        $user->display_name = $ldapUser->displayName;
+        if (isset($ldapUser->raw['matricola']) && $ldapUser->raw['matricola'] !== null) {
+            $user->matricola = (string) $ldapUser->raw['matricola'];
+        }
+        $user->ldap_groups = json_encode($ldapUser->groups, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $user->save();
+        return $user;
+    }
+
+    /**
+     * Global pending regulations + unaccepted regulations required by the
+     * order's items, in the pending_regulations item shape (§5.5).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function pendingRegulationsFor(User $target, Order $order): array
+    {
+        $normalized = [];
+        foreach (OrderItem::where('order_id', $order->id)->get() as $item) {
+            $normalized[] = ['product_id' => (int) $item->product_id, 'product' => $item->product];
+        }
+        $seen = [];
+        $out = [];
+        $pending = array_merge(
+            $this->regulations->pendingGlobalFor($target),
+            $this->regulations->filterUnaccepted($this->regulations->requiredForItems($normalized), $target)
+        );
+        foreach ($pending as $reg) {
+            if (isset($seen[(int) $reg->id])) {
+                continue;
+            }
+            $seen[(int) $reg->id] = true;
+            $out[] = RegulationResource::pendingItem($reg, true);
+        }
+        return $out;
     }
 
     /** GET /orders (SPEC §7.9 #41). */

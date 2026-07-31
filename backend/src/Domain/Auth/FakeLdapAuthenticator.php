@@ -9,7 +9,7 @@ use App\Models\FakeLdapUser;
 /**
  * Development/test authenticator backed by the fake_ldap_users table (SPEC §4.2).
  */
-final class FakeLdapAuthenticator implements LdapAuthenticatorInterface
+final class FakeLdapAuthenticator implements LdapAuthenticatorInterface, LdapDirectoryLookupInterface
 {
     public function authenticate(string $username, string $password): ?LdapUser
     {
@@ -20,6 +20,21 @@ final class FakeLdapAuthenticator implements LdapAuthenticatorInterface
         if (!password_verify($password, (string) $row->password_hash)) {
             return null;
         }
+        return $this->toLdapUser($row);
+    }
+
+    /** Directory lookup without credentials (staff manual-loan provisioning). */
+    public function lookupUsername(string $username): ?LdapUser
+    {
+        $row = FakeLdapUser::where('username', $username)->first();
+        if ($row === null || !$row->is_active) {
+            return null;
+        }
+        return $this->toLdapUser($row);
+    }
+
+    private function toLdapUser(FakeLdapUser $row): LdapUser
+    {
         $groups = [];
         if ($row->groups !== null && $row->groups !== '') {
             $decoded = json_decode((string) $row->groups, true);

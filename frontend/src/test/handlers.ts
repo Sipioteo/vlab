@@ -354,6 +354,19 @@ export const handlers: HttpHandler[] = [
 
   /* --------------------------------------------------------------- orders */
   http.post(p('/orders'), () => HttpResponse.json(f.makeOrder(), { status: 201 })),
+  http.post(p('/orders/manual'), () =>
+    HttpResponse.json(
+      f.makeStaffOrder({
+        id: 120,
+        code: 'VL-2026-0120',
+        status: 'approved',
+        status_label: 'Approvato',
+        allowed_actions: ['pickup', 'cancel', 'mark_no_show'],
+        pending_regulations: [],
+      }),
+      { status: 201 },
+    ),
+  ),
   http.get(p('/orders/calendar'), () =>
     HttpResponse.json({
       range: { from: '2026-08-01', to: '2026-08-31' },

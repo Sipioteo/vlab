@@ -717,6 +717,213 @@ class OrderService
         });
     }
 
+    // ------------------------------------------------------- manual creation
+
+    /**
+     * POST /api/v1/orders/manual — a staff member registers a loan on behalf
+     * of a student (walk-in at the counter, phone booking, after-the-fact
+     * correction). Mirrors checkout for the order side effects and
+     * editOrderFull for the availability/force semantics:
+     *
+     * - availability re-checked inside the transaction (§2 concurrency rule);
+     *   shortfall → 422 `insufficient_availability` with details.products,
+     *   overridable with `force: true` (admin only → flagged forced_overbook);
+     * - LimitsEvaluator runs and records exceeds_limits/limit_violations but
+     *   never blocks a staff action;
+     * - regulation acceptance is NOT enforced (the signature on the printed
+     *   module covers it) — pending regulations are reported by the caller;
+     * - if initial_status is `approved` (the default), the pending→approved
+     *   transition goes through the state machine so the approval event and
+     *   actor are recorded coherently.
+     *
+     * @param array<string,mixed> $payload
+     * @return array{0:Order, 1:?array} [order, overbooked products or null]
+     */
+    public function createManual(User $actor, User $target, array $payload): array
+    {
+        $force = (bool) ($payload['force'] ?? false);
+        if ($force && $actor->role !== 'admin') {
+            throw ApiException::forbidden('Solo un amministratore può forzare la creazione senza disponibilità.');
+        }
+
+        $errors = [];
+        // Contract names are start_date/end_date; the checkout aliases are
+        // accepted too so staff tooling can reuse existing payload builders.
+        $pickupDate = isset($payload['start_date']) ? (string) $payload['start_date']
+            : (isset($payload['pickup_date']) ? (string) $payload['pickup_date'] : null);
+        $returnDate = isset($payload['end_date']) ? (string) $payload['end_date']
+            : (isset($payload['return_date']) ? (string) $payload['return_date'] : null);
+        $pickupTime = isset($payload['pickup_time']) ? (string) $payload['pickup_time'] : null;
+        $returnTime = isset($payload['return_time']) ? (string) $payload['return_time'] : null;
+
+        if ($pickupDate === null || !Dates::isValidDate($pickupDate)) {
+            $errors['start_date'] = ['Il campo start_date è obbligatorio (YYYY-MM-DD).'];
+        }
+        if ($returnDate === null || !Dates::isValidDate($returnDate)) {
+            $errors['end_date'] = ['Il campo end_date è obbligatorio (YYYY-MM-DD).'];
+        }
+        if ($pickupTime === null || !Dates::isValidTime($pickupTime)) {
+            $errors['pickup_time'] = ['Il campo pickup_time è obbligatorio (HH:MM).'];
+        }
+        if ($returnTime === null || !Dates::isValidTime($returnTime)) {
+            $errors['return_time'] = ['Il campo return_time è obbligatorio (HH:MM).'];
+        }
+        if ($pickupDate !== null && $returnDate !== null
+            && Dates::isValidDate($pickupDate) && Dates::isValidDate($returnDate)
+            && $returnDate < $pickupDate) {
+            $errors['end_date'] = ['La data di riconsegna deve essere successiva o uguale al ritiro.'];
+        }
+
+        $initialStatus = (string) ($payload['initial_status'] ?? 'approved');
+        if (!in_array($initialStatus, ['approved', 'pending'], true)) {
+            $errors['initial_status'] = ['Stato iniziale non valido: approved o pending.'];
+        }
+
+        $rawItems = $payload['items'] ?? null;
+        $items = [];
+        if (!is_array($rawItems) || $rawItems === [] || count($rawItems) > 50) {
+            $errors['items'] = ['Specificare da 1 a 50 articoli.'];
+        } else {
+            $items = $this->normalizeItems($rawItems);
+            foreach ($items as $item) {
+                if ($item['product'] === null || $item['product']->deleted_at !== null || $item['product']->status === 'retired') {
+                    $errors['items'] = ['Uno o più prodotti non sono disponibili.'];
+                    break;
+                }
+            }
+        }
+        if ($errors !== []) {
+            throw ApiException::validation($errors);
+        }
+
+        $optional = [];
+        foreach (['subject', 'professor', 'motivation', 'notes', 'staff_notes'] as $f) {
+            $value = isset($payload[$f]) && $payload[$f] !== null ? trim((string) $payload[$f]) : '';
+            $optional[$f] = $value !== '' ? mb_substr($value, 0, $f === 'subject' || $f === 'professor' ? 191 : 2000) : null;
+        }
+
+        $comment = isset($payload['comment']) && $payload['comment'] !== null ? (string) $payload['comment'] : null;
+
+        return Capsule::connection()->transaction(function () use (
+            $actor, $target, $items, $pickupDate, $pickupTime, $returnDate, $returnTime,
+            $optional, $initialStatus, $force, $comment
+        ) {
+            $this->lockForAvailability();
+
+            // ---- availability, re-checked inside the transaction ------------
+            $productIds = array_map(static fn ($i) => $i['product_id'], $items);
+            $availabilityByProduct = $this->availability->availableForRange($productIds, $pickupDate, $returnDate, null);
+            $short = [];
+            foreach ($items as $item) {
+                $info = $availabilityByProduct[$item['product_id']] ?? ['available' => 0];
+                if ($item['quantity'] > $info['available']) {
+                    $short[] = [
+                        'product_id' => $item['product_id'],
+                        'name' => $item['product']?->name,
+                        'requested' => $item['quantity'],
+                        'available' => (int) $info['available'],
+                    ];
+                }
+            }
+            $overbook = null;
+            if ($short !== []) {
+                if (!$force) {
+                    throw new ApiException(422, 'insufficient_availability', 'La disponibilità non è sufficiente per alcuni prodotti nel periodo selezionato.', [
+                        'products' => $short,
+                    ]);
+                }
+                $overbook = $short;
+            }
+
+            // ---- limits: recorded on the order, never blocking staff --------
+            $violations = $this->limits->evaluate(
+                $target,
+                $items,
+                $pickupDate,
+                $pickupTime,
+                $returnDate,
+                $returnTime,
+                null,
+                $availabilityByProduct
+            );
+
+            [$code, $sequence] = $this->nextOrderCode();
+            $order = new Order([
+                'user_id' => $target->id,
+                'status' => 'pending',
+                'code' => $code,
+                'year_sequence' => $sequence,
+                'pickup_date' => $pickupDate,
+                'pickup_time' => $pickupTime,
+                'return_date' => $returnDate,
+                'return_time' => $returnTime,
+                'subject' => $optional['subject'],
+                'motivation' => $optional['motivation'],
+                'professor' => $optional['professor'],
+                'notes' => $optional['notes'],
+                'staff_notes' => $optional['staff_notes'],
+                'exceeds_limits' => LimitsEvaluator::hasSoft($violations),
+                'limit_violations' => json_encode($violations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'submitted_at' => Dates::nowDb(),
+            ]);
+            $order->save();
+
+            foreach ($items as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'notes' => $item['notes'] !== null ? mb_substr($item['notes'], 0, 255) : null,
+                    'product_name_snapshot' => $item['product']->name,
+                    'product_brand_snapshot' => $item['product']->brand,
+                ]);
+            }
+            $this->recountItems($order);
+
+            // Birth event: `create` by the staff actor, marked as manual.
+            $meta = ['manual' => true, 'created_by' => (int) $actor->id];
+            if ($overbook !== null) {
+                $meta['forced'] = true;
+                $meta['overbooked_products'] = $overbook;
+            }
+            $this->writeEvent($order, null, 'pending', 'create', $actor, $comment, $meta);
+
+            if ($initialStatus === 'approved') {
+                // Through the state machine, so the approval actor/event are
+                // recorded exactly like a queue approval. Availability is not
+                // re-asserted here: it was checked (or force-overridden) above,
+                // in this same transaction.
+                $this->machine->assertCan($order, 'approve', $actor);
+                $order->status = 'approved';
+                $order->decided_by = $actor->id;
+                $order->decided_at = Dates::nowDb();
+                $order->save();
+                $this->writeEvent($order, 'pending', 'approved', 'approve', $actor, null, null);
+            }
+
+            $auditChanges = [
+                'after' => [
+                    'user_id' => (int) $target->id,
+                    'user_ldap_uid' => (string) $target->ldap_uid,
+                    'code' => $code,
+                    'pickup_date' => $pickupDate,
+                    'return_date' => $returnDate,
+                    'initial_status' => $initialStatus,
+                    'items' => array_map(static fn ($i) => [
+                        'product_id' => $i['product_id'],
+                        'quantity' => $i['quantity'],
+                    ], $items),
+                ],
+            ];
+            if ($overbook !== null) {
+                $auditChanges['forced_overbook'] = $overbook;
+            }
+            AuditLogger::log($actor, 'order.create_manual', 'Order', (string) $order->id, $auditChanges);
+
+            return [$order->refresh(), $overbook];
+        });
+    }
+
     /** @return array{0:string, 1:int} [code, year_sequence] */
     private function nextOrderCode(): array
     {
