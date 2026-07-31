@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { useAuth, useIsStaff } from '@/auth/AuthProvider';
 import { useSettings } from '@/settings/SettingsProvider';
 import { useCartBadge } from '@/hooks/useCart';

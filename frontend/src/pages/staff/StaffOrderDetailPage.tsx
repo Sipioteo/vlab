@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { ApiError } from '@/api/client';

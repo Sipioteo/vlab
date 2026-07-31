@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Icon } from './Icon';
 import { Badge, Button, ProductImage } from './ui';
 import { getAccessToken } from '@/api/client';

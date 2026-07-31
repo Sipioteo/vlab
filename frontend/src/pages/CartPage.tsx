@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { useCartMutations, useCartQuery } from '@/hooks/useCart';
 import { useToast } from '@/components/Toast';

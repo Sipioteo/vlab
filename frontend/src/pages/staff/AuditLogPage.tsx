@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { Card, EmptyState, Pagination, SearchInput, SkeletonList } from '@/components/ui';

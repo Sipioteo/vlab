@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router';
 import { useAuth } from './AuthProvider';
 import type { PermissionKey } from '@/types/api';
 import { Splash } from '@/components/Splash';

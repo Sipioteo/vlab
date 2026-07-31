@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { ApiError } from '@/api/client';

@@ -46,8 +46,11 @@ function lastRequest(method: string, path: string): RequestRecord | undefined {
 
 
 async function fillCheckout(user: ReturnType<typeof userEvent.setup>) {
-  await screen.findByRole('heading', { name: 'Invia la richiesta di prestito', level: 1 });
-  await user.type(screen.getByLabelText('Materia'), 'Laboratorio di Ripresa');
+  // The heading renders identically in the loading-skeleton, empty, and
+  // ready states, so waiting for it alone doesn't guarantee the cart query
+  // has resolved yet — wait for the actual field before typing into it.
+  const subject = await screen.findByLabelText('Materia');
+  await user.type(subject, 'Laboratorio di Ripresa');
   await user.type(
     screen.getByLabelText(/Motivazione/),
     'Riprese del cortometraggio finale del corso.',

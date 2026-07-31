@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router';
 import { useAuth } from '@/auth/AuthProvider';
 import { RequireAuth, RequireRole } from '@/auth/guards';
 import { AppShell } from '@/components/AppShell';
@@ -43,19 +43,21 @@ import { AuditLogPage } from '@/pages/staff/AuditLogPage';
  *
  * The app keeps rendering behind the dialog (so the user sees where they are)
  * but is marked `inert` + `aria-hidden`: no clicks, no tabbing, no screen
- * reader wandering. `inert` is passed as a raw DOM attribute because React 18
- * has no typed prop for it.
+ * reader wandering. React 19 has a typed `inert` prop, so it's passed as a
+ * real boolean instead of the raw-attribute workaround earlier React needed.
  */
 function RegulationGate({ children }: { children: ReactNode }) {
   const { pendingRegulations, isAuthenticated } = useAuth();
   const blocking = isAuthenticated && pendingRegulations.some(isBlockingRegulation);
-  const inertProps = blocking
-    ? ({ inert: '', 'aria-hidden': 'true' } as Record<string, string>)
-    : {};
 
   return (
     <>
-      <div className="vl-approot" data-blocked={blocking ? 'true' : undefined} {...inertProps}>
+      <div
+        className="vl-approot"
+        data-blocked={blocking ? 'true' : undefined}
+        inert={blocking ? true : undefined}
+        aria-hidden={blocking ? 'true' : undefined}
+      >
         {children}
       </div>
       {blocking ? <RegulationGateDialog /> : null}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { useAuth } from '@/auth/AuthProvider';

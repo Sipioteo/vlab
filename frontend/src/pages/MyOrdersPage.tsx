@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { useEnums } from '@/hooks/useEnums';

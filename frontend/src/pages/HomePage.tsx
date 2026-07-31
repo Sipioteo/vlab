@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '@/api/endpoints';
 import { useSettings } from '@/settings/SettingsProvider';
