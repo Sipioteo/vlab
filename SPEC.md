@@ -1,5 +1,5 @@
 # Visionary Lab — Equipment Loan Platform
-## Complete Technical Specification (v1.2, binding)
+## Complete Technical Specification (v1.3, binding)
 
 **Status:** FROZEN CONTRACT. Backend and frontend teams implement in parallel against this document.
 **Scope:** full rewrite/modernization of `https://prestitivlab.polito.it` (Politecnico di Torino — Visionary Lab / Ufficio Multimedialità equipment loans).
@@ -9,6 +9,8 @@
 **v1.1 (2026-07-31):** documented two features implemented after the v1.0 freeze — the order form PDF export (§7.5 #89, §7.9 #89) and substitute products (§6.22, §7.4 `Product.substitutes`, §7.5 #87/#88, §7.7 #87, §7.8 #32 `suggested_substitutes`, §7.9 #88). No previously frozen field or endpoint was renamed or removed.
 
 **v1.2 (2026-07-31):** documented two more post-freeze features — the obfuscated per-user iCal feed (§6.1 `users.ical_token`/`ical_token_generated_at`, §6.12 `edit` event action, §7.5 #90–92, new §7.13) and admin full order editing (§6.12 `edit` action, §7.5 #93, §7.9 #43/#93, §8.2 row 17, §8.4, §9.2, §9.3 `orders.edit_full`) — plus a documentation-only correction: `pending_regulations.blocking` is present on `/auth/login`, `/auth/refresh` and `/auth/me`, not only on `/me/regulations/pending` (§5.5, §7.6 #3/#6). No previously frozen field or endpoint was renamed or removed.
+
+**v1.3 (2026-07-31):** documented staff manual loan creation (§4.2 `LdapDirectoryLookupInterface`, §6.12/§8 `create` event action, §7.5 #94, §7.9 #94, §9.2, §9.3 `orders.create_manual`). No previously frozen field or endpoint was renamed or removed.
 
 > **Rule for implementers:** if this document and your intuition disagree, this document wins. If something is genuinely absent, pick the option that requires the *fewest* new JSON fields and add a `TODO(spec)` comment. Never rename a JSON field.
 
@@ -317,6 +319,21 @@ final class LdapUser {
 ```
 
 `LdapTestResult { bool $ok; string $message; ?int $latencyMs; ?int $entriesFound; }`
+
+**`LdapDirectoryLookupInterface`** — optional capability of an authenticator, separate from `LdapAuthenticatorInterface`:
+
+```php
+interface LdapDirectoryLookupInterface
+{
+    /**
+     * @throws LdapUnavailableException when the directory cannot be reached / bound.
+     * @return LdapUser|null null == no such (active) user in the directory
+     */
+    public function lookupUsername(string $username): ?LdapUser;
+}
+```
+
+Resolves a username through the directory using the **service bind only**, no user credentials — used exclusively by staff manual loan creation (§7.9 #94) to provision a user who has never logged in. Both `RealLdapAuthenticator` (service-bind search, no re-bind as the found DN) and `FakeLdapAuthenticator` (looks up `fake_ldap_users` by `username`, `is_active` only, no password check) implement it. An authenticator that cannot search on behalf of the service simply doesn't implement the interface; `OrderController::resolveTargetUser` checks `$this->ldap instanceof LdapDirectoryLookupInterface` and falls back to local users only (unknown username → `422 user_not_found`) when it's absent. When present and a hit occurs, the `User` row is provisioned exactly like `AuthController::login`'s first-login path (§4.1) — `ldap_uid`, role via `RoleResolver::resolve`, `role_source: "ldap"`, `is_active: true`, `token_version: 1`, `email`/`first_name`/`last_name`/`display_name`/`matricola`/`ldap_groups` from the directory — **minus `last_login_at`**, which stays `null`: this user has never signed in.
 
 ### RealLdapAuthenticator
 
@@ -770,7 +787,7 @@ Indexes: `uniq_order_item_units (order_item_id, product_unit_id)`, `idx_order_it
 | order_id | fk → orders.id | no | cascade |
 | from_status | string(32) | yes | null on creation |
 | to_status | string(32) | no | |
-| action | string(64) | no | `submit\|approve\|reject\|cancel\|pickup\|return\|mark_no_show\|mark_overdue\|reopen\|note\|edit` |
+| action | string(64) | no | `submit\|create\|approve\|reject\|cancel\|pickup\|return\|mark_no_show\|mark_overdue\|reopen\|note\|edit` |
 | actor_id | fk → users.id | yes | null ⇒ system |
 | actor_type | string(16) | no | `user\|system` |
 | actor_role | string(32) | yes | role at the time |
@@ -781,6 +798,8 @@ Indexes: `uniq_order_item_units (order_item_id, product_unit_id)`, `idx_order_it
 Indexes: `idx_order_events_order (order_id, created_at)`.
 
 `action: "edit"` is written only by the admin full-edit path (`orders.edit_full` — `PUT /orders/{id}` for admins and `POST /orders/{id}/change-dates`), with `meta = {"changes": {...}, "edit_full": true}` (plus `"forced": true` and `"overbooked_products": [...]` when saved with `force: true`). The pre-existing staff edit (`PUT /orders/{id}` for technician/assistant, §7.9 #43) still writes `action: "note"` with `meta = {"changes": {...}}` — unchanged.
+
+`action: "create"` is the birth event of a staff-created loan (`POST /orders/manual`, `orders.create_manual` — §7.9 #94): `from_status: null`, `to_status: "pending"`, actor = the staff caller, `meta = {"manual": true, "created_by": <actor id>}` (plus `"forced": true` and `"overbooked_products": [...]` when force-saved). It never appears for a student checkout, which still writes `action: "submit"` from `draft`.
 
 ## 6.13 `settings`
 
@@ -1444,6 +1463,7 @@ Legend for the **Auth** column: `–` public, `A` any authenticated user, `S` st
 | 91 | GET | `/api/v1/me/ical` | A |
 | 92 | POST | `/api/v1/me/ical/rotate` | A |
 | 93 | POST | `/api/v1/orders/{id}/change-dates` | AD |
+| 94 | POST | `/api/v1/orders/manual` | T/AD |
 
 ## 7.6 System & auth endpoints
 
@@ -2054,6 +2074,56 @@ Response `201 Order` (detail form) + `Location: /api/v1/orders/{id}`.
 
 Errors: `422 validation_failed`, `422 limit_violation` (details = `{"violations":[…]}`), `422 date_not_bookable` (details = `{"field":"pickup_date","suggestions":["2026-08-03","2026-08-04","2026-08-05"]}`), `409 insufficient_availability` (details = `{"products":[{"product_id":128,"requested":2,"available":1}]}`), `409 regulation_acceptance_required` (details = `{"regulation_ids":[4]}`).
 
+### 94. `POST /api/v1/orders/manual` — T/AD — staff manual loan creation (`orders.create_manual`)
+
+A technician or admin registers a loan on behalf of a student directly — the walk-in at the counter, the phone booking, the after-the-fact correction that the cart-only checkout (#40) has no entry point for. Mirrors checkout for the order-birth side effects and #43's admin path for the availability/force semantics; unlike #40 there is no cart and no `RequireRegulationAcceptanceMiddleware` gate.
+
+```json
+{
+  "username": "student1",
+  "user_id": null,
+  "items": [ { "product_id": 128, "quantity": 1, "notes": null } ],
+  "start_date": "2026-09-10",
+  "end_date": "2026-09-12",
+  "pickup_time": "09:30",
+  "return_time": "16:00",
+  "subject": "Laboratorio di Ripresa",
+  "professor": null,
+  "motivation": "Prestito registrato allo sportello dal tecnico.",
+  "notes": null,
+  "staff_notes": "Consegna immediata allo sportello.",
+  "initial_status": "approved",
+  "force": false,
+  "comment": null
+}
+```
+
+Field rules:
+
+| Field | Required | Rules |
+|---|---|---|
+| `user_id` | one of `user_id`/`username` required | existing local `users.id`; unknown id → `422 user_not_found` |
+| `username` | one of `user_id`/`username` required | resolved local-first against `users.ldap_uid`; a soft-deleted match → `403 account_disabled`; no local match falls through to a directory lookup (only when the active authenticator implements `LdapDirectoryLookupInterface`, §4.2), which provisions the user exactly like first login, minus `last_login_at` (§4.2); no local match and no directory hit (or an authenticator without lookup support) → `422 user_not_found`; directory unreachable → `503 ldap_unavailable` |
+| `items` | **yes** | `[{product_id, quantity, notes?}]`, 1..50 — same shape as checkout |
+| `start_date` | **yes** | valid date; contract name. `pickup_date` is accepted as an alias so staff tooling can reuse checkout/edit payload builders |
+| `end_date` | **yes** | `>= start_date`; contract name, alias `return_date` |
+| `pickup_time` | **yes** | `HH:MM` |
+| `return_time` | **yes** | `HH:MM` |
+| `subject`, `professor`, `motivation`, `notes`, `staff_notes` | no | free text; unlike checkout **none** of these — including `motivation` — are conditionally required, and length limits follow checkout/edit (191 for `subject`/`professor`, 2000 for the rest) |
+| `initial_status` | no (default `approved`) | `approved` \| `pending`, anything else → `422 validation_failed` |
+| `force` | no (default `false`) | **admin only** — a non-admin sending `force: true` gets `403 forbidden`, whether or not availability would actually have been short |
+| `comment` | no | attached to the birth `order_events` row |
+
+Behaviour, inside one transaction (§2 concurrency rule): availability for `[start_date, end_date]` is checked exactly like checkout; a shortfall is `422 insufficient_availability` (`details.products[]` — `product_id`, `name`, `requested`, `available`) and nothing is persisted, unless `force: true` (admin only), which saves anyway and records the overbooking. `LimitsEvaluator` runs and sets `exceeds_limits`/`limit_violations` on the order but — like every staff action — never blocks. Regulation acceptance is **not** enforced (the signature on the printed module covers it); the response instead tells the operator what the student hasn't accepted (see below). `code`/`year_sequence` are assigned, items are snapshotted (`product_name_snapshot`/`product_brand_snapshot`), `items_count` recomputed — same as checkout.
+
+Events (§6.12/§8.2 row 18): writes an `order_events` row `action: "create"`, `from_status: null`, `to_status: "pending"`, actor = the staff caller, `actor_role` = their role, `meta = {"manual": true, "created_by": <actor id>}` (plus `"forced": true` and `"overbooked_products": [...]` when force-saved). When `initial_status = "approved"` (the default) the `pending → approved` transition then goes through the state machine exactly like a queue approval — a second, genuine `order_events` row `action: "approve"`, `from_status: "pending"`, `to_status: "approved"`, same actor — so `Order.decided_by`/`decided_at` are set and the trail reads coherently. `initial_status = "pending"` skips that second event; the order is left in the ordinary approval queue and `decided_by` stays `null`.
+
+Response `201 Order` (detail form) + `Location: /api/v1/orders/{id}`, plus, when force-saved, the same extras as #43's forced path — `"forced_overbook": true` and `"overbooked_products": [...]` (same shape as the 422 `details.products`) — and, always, `"pending_regulations": [...]`: the union of the target's unaccepted global regulations and unaccepted regulations required by the order's items, in the §5.5 item shape (`blocking` present) — purely informational, it never blocks the `201`.
+
+Errors: `422 validation_failed`, `422 user_not_found`, `422 insufficient_availability` (details = `{"products":[...]}`), `403 forbidden` (non-admin sending `force: true`), `403 account_disabled` (soft-deleted target), `403 role_required` (assistant/student — the route itself requires `orders.create_manual`, technician/admin only), `503 ldap_unavailable` (directory lookup failed while resolving `username`).
+
+Audit: `audit_logs` row `action: "order.create_manual"`, `entity_type: "Order"`, `entity_id: "{id}"`, `changes.after = {user_id, user_ldap_uid, code, pickup_date, return_date, initial_status, items: [{product_id, quantity}]}` (plus `changes.forced_overbook` — the same `details.products` shape — when force-saved).
+
 ### 41. `GET /api/v1/orders`
 
 Query:
@@ -2597,6 +2667,7 @@ Mints a brand-new token and immediately invalidates the previous one — the old
 | 15 | any non-terminal | `note` | *(unchanged)* | technician, assistant, admin | – | appends an `order_events` row; `staff_notes` may be replaced |
 | 16 | `pending`,`approved` | `edit` | *(unchanged)* | technician, assistant, admin | availability re-validated excluding self | limits re-evaluated; `order_events` diff |
 | 17 | `pending`,`approved`,`rejected`,`cancelled`,`picked_up`,`overdue`,`returned`,`returned_late`,`no_show` (any non-draft) | `change_dates` | *(unchanged)* | **admin only** | availability re-validated excluding self; `force: true` overrides a shortfall | `orders.edit_full`; `order_events action: "edit"`, `meta.edit_full = true`; `audit_logs action: "order.edit_full"`; see §7.9 #93. **The order owner never triggers this**, at any status — a submitted order is frozen student-side |
+| 18 | *(none)* | `create` | `pending` (then immediately `approved` when `initial_status="approved"`, the default) | technician, admin (`orders.create_manual`, `POST /orders/manual`) | availability sufficient for `[start_date, end_date]` (excluding nothing — brand-new demand), unless `force: true` (admin only); regulation acceptance **not** enforced | assigns `code`+`year_sequence`; snapshots product names; writes `order_events action: "create"`; when `initial_status="approved"` immediately chains transition #3 (`approve`) with the same actor; see §7.9 #94 |
 
 **Anything not in this table is forbidden** → `409 invalid_transition` with:
 ```json
@@ -2681,6 +2752,7 @@ Legend: ✔ allowed · ✖ denied · **O** only own records · ◐ limited (see 
 | Query with `exclude_order_id` | ✖ | O | ✔ | ✔ | ✔ |
 | **Cart & orders** |
 | Use cart / create order | ✖ | ✔ | ✖³ | ✖³ | ✖³ |
+| Create a loan on behalf of a student (`orders.create_manual`, `POST /orders/manual`) | ✖ | ✖ | ✖ | **✔** | ✔ |
 | View own orders | ✖ | ✔ | ✔ | ✔ | ✔ |
 | View all orders | ✖ | ✖ | ✔ | ✔ | ✔ |
 | Approve / reject order | ✖ | ✖ | **✔** | ✔ | ✔ |
@@ -2723,7 +2795,7 @@ Legend: ✔ allowed · ✖ denied · **O** only own records · ◐ limited (see 
 Notes:
 1. Anonymous catalog browsing is gated by setting `ui.allow_anonymous_catalog` (default `true`). When `false`, catalog endpoints require authentication.
 2. Students see unit labels only if `ui.show_unit_codes_to_students` is `true`, and never see serial numbers, asset codes or locations.
-3. Staff accounts do not have a cart in v1. `POST /cart/*` and `POST /orders` return `403 role_required` for non-students. If a technician needs to book for a student, they create the order through the student's record — **out of scope for v1**; the documented workaround is to have the student submit and the technician approve.
+3. Staff accounts do not have a cart in v1. `POST /cart/*` and `POST /orders` return `403 role_required` for non-students. To book on a student's behalf (walk-in, phone booking, after-the-fact correction), technician/admin use the dedicated `POST /orders/manual` (`orders.create_manual`, §7.9 #94) instead — it is not routed through the cart.
 4. A student may cancel `pending` freely, and `approved` only before the cancellation deadline.
 5. The assistant's `stats/overview` response has `scope: "limited"` and omits the `totals` and `inventory` blocks.
 6. Even the order's **owner** is denied — a submitted order is frozen student-side: no date/item editing at all once out of the cart, in any status, including while `pending`.
@@ -2735,6 +2807,7 @@ Notes:
 | `products.manage` | false | **false** | true | true |
 | `orders.manage` | false | **true** | true | true |
 | `orders.create` | **true** | false | false | false |
+| `orders.create_manual` | false | false | **true** | **true** |
 | `logs.create` | false | **true** | true | true |
 | `settings.manage` | false | false | false | **true** |
 | `settings.view` | false | true | true | true |
@@ -3606,7 +3679,7 @@ All values are lowercase snake_case. Italian labels come from `GET /meta/enums`;
 |---|---|
 | `role` | `student`, `technician`, `assistant`, `admin` |
 | `order_status` | `draft`, `pending`, `approved`, `rejected`, `cancelled`, `picked_up`, `overdue`, `returned`, `returned_late`, `no_show` |
-| `order_action` | `submit`, `approve`, `reject`, `cancel`, `pickup`, `return`, `mark_no_show`, `mark_overdue`, `reopen`, `note`, `edit` |
+| `order_action` | `submit`, `create`, `approve`, `reject`, `cancel`, `pickup`, `return`, `mark_no_show`, `mark_overdue`, `reopen`, `note`, `edit` |
 | `actor_type` | `user`, `system` |
 | `product_status` | `available`, `maintenance`, `retired` |
 | `unit_status` | `available`, `maintenance`, `missing`, `retired`, `internal_use` |
