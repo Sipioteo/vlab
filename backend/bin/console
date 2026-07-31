@@ -1,0 +1,113 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+require dirname(__DIR__) . '/src/bootstrap.php';
+
+use App\Domain\Settings\SettingsRepository;
+use App\Models\User;
+use App\Support\Enums;
+use App\Support\Migrator;
+
+[$config] = vlab_boot_core();
+
+$command = $argv[1] ?? 'help';
+$args = array_slice($argv, 2);
+
+$out = static function (string $line): void {
+    fwrite(STDOUT, $line . "\n");
+};
+
+function vlab_run_seeders(array $config, array $args, callable $out): void
+{
+    $seedersPath = dirname(__DIR__) . '/database/seeders';
+    require_once $seedersPath . '/SettingsSeeder.php';
+    require_once $seedersPath . '/CatalogSeeder.php';
+    require_once $seedersPath . '/FakeUsersSeeder.php';
+    require_once $seedersPath . '/RegulationsSeeder.php';
+    require_once $seedersPath . '/ClosuresSeeder.php';
+    (new SettingsSeeder())->run($out);
+    (new CatalogSeeder())->run($out);
+    (new FakeUsersSeeder($config))->run($out);
+    (new RegulationsSeeder())->run($out);
+    (new ClosuresSeeder())->run($out);
+    if (in_array('--demo', $args, true)) {
+        require_once $seedersPath . '/DemoOrdersSeeder.php';
+        (new DemoOrdersSeeder())->run($out);
+    }
+    SettingsRepository::reset();
+}
+
+switch ($command) {
+    case 'migrate':
+        $ran = (new Migrator())->migrate();
+        $out($ran === [] ? 'Nessuna migrazione da applicare.' : 'Applicate ' . count($ran) . ' migrazioni:');
+        foreach ($ran as $name) {
+            $out('  - ' . $name);
+        }
+        exit(0);
+
+    case 'migrate:fresh':
+        $ran = (new Migrator())->fresh();
+        $out('Database ricreato: ' . count($ran) . ' migrazioni applicate.');
+        exit(0);
+
+    case 'seed':
+    case 'db:seed':
+        vlab_run_seeders($config, $args, $out);
+        exit(0);
+
+    case 'settings:list':
+        foreach (SettingsRepository::instance()->rows() as $key => $row) {
+            $out(sprintf('%-50s %-8s %s', $key, $row['type'], (string) $row['value']));
+        }
+        exit(0);
+
+    case 'user:role':
+        $uid = $args[0] ?? null;
+        $role = $args[1] ?? null;
+        if ($uid === null || $role === null || !in_array($role, Enums::ROLES, true)) {
+            $out('Uso: bin/console user:role <ldap_uid> <student|technician|assistant|admin>');
+            exit(1);
+        }
+        $user = User::where('ldap_uid', $uid)->first();
+        if ($user === null) {
+            $out("Utente {$uid} non trovato.");
+            exit(1);
+        }
+        $user->role = $role;
+        $user->role_locked = true;
+        $user->role_source = 'manual';
+        $user->token_version = (int) $user->token_version + 1;
+        $user->save();
+        $out("Ruolo di {$uid} impostato a {$role} (role_locked=true).");
+        exit(0);
+
+    case 'orders:refresh':
+        $app = vlab_create_app();
+        $service = $app->getContainer()->get(\App\Domain\Orders\OrderService::class);
+        $changed = $service->refreshOverdueAll();
+        $out("Aggiornate {$changed} richieste (overdue/no-show).");
+        exit(0);
+
+    case 'carts:prune':
+        $app = vlab_create_app();
+        $service = $app->getContainer()->get(\App\Domain\Orders\OrderService::class);
+        $pruned = $service->pruneStaleCarts();
+        $out("Eliminati {$pruned} carrelli scaduti.");
+        exit(0);
+
+    case 'help':
+    default:
+        $out('Comandi disponibili:');
+        $out('  migrate         Applica le migrazioni mancanti');
+        $out('  migrate:fresh   Ricrea il database da zero');
+        $out('  seed | db:seed  Esegue i seeder (aggiungi --demo per gli ordini demo)');
+        $out('  settings:list   Elenca le impostazioni');
+        $out('  user:role       Cambia il ruolo di un utente (uid ruolo)');
+        $out('  orders:refresh  Sweep overdue / no-show');
+        $out('  carts:prune     Elimina i carrelli scaduti');
+        exit($command === 'help' ? 0 : 1);
+}
