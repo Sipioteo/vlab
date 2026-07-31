@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Visionary Lab">
+  <title>Visionary Lab</title>
+  <!-- Standalone copy of the Logo component's mark (frontend/src/components/Logo.tsx).
+       Colours are literal here so the file is self-contained; retint plate/accent
+       alongside --color-primary / --color-accent if the palette changes. -->
+  <rect width="64" height="64" rx="4" fill="#00284B"/>
+  <path d="M7.5 11H16L20.25 34.8L24.5 11H33L23.5 53H17Z" fill="#FFFFFF"/>
+  <path d="M40.75 11V48.75H56.5" fill="none" stroke="#EF7B02" stroke-width="8.5"/>
+</svg>

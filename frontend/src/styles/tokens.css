@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Visionary Lab — design tokens (SPEC §12.2)
+   Politecnico di Torino design language, modernized: structural navy + a single
+   hot orange accent, near-square geometry, Poppins/Roboto register split.
+   Values are lifted from polito.it's own production stylesheets.
+   ========================================================================== */
+
+:root {
+  /* Brand — structural navy. #00284b is the site's body/heading ink and the
+     colour of every dark full-bleed band; #002b49 is the subfooter variant. */
+  --color-primary: #00284b;
+  --color-primary-700: #002b49;
+  --color-primary-500: #175a7d; /* mid navy — --bs-secondary on polito.it */
+  --color-primary-400: #007ba1; /* link teal-blue, AA on white at 4.5:1+ */
+  --color-primary-300: #6f9ab5;
+  --color-primary-050: #e8eef3;
+
+  /* The ONE accent. Fills, bars, CTA backgrounds — never text on white. */
+  --color-accent: #ef7b02;
+  --color-accent-600: #f18f28; /* hover: polito lightens, it does not darken */
+  /* Orange darkened far enough to clear AA at the 10-11px sizes the small
+     uppercase labels use — orange itself never carries text. */
+  --color-accent-700: #a85200;
+  --color-accent-050: #fdf0e0;
+
+  /* Functional, not brand: cyan stays reserved for availability semantics. */
+  --color-highlight: #00c2cb;
+  --color-highlight-050: #e0fafb;
+
+  /* Neutrals */
+  --color-ink: #00284b; /* body copy is navy, not black — that's the tell */
+  --color-ink-muted: #47586b;
+  --color-ink-subtle: #5c6b7d;
+  --color-line: #e4e5e6; /* polito hairline */
+  --color-line-strong: #c3c9cf;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f2f4f6; /* polito off-white band */
+  --color-surface-sunken: #e9ecef;
+
+  /* Dark surfaces (bands, hero, staff rail) — same navy family throughout */
+  --color-dark: #00284b;
+  --color-dark-alt: #002b49;
+  --color-dark-deep: #001b33; /* hero floor, keeps the cinematic falloff */
+  --color-dark-line: #164a70;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #b6c8d6;
+
+  /* Semantic */
+  --color-success: #015850;
+  --color-success-050: #e3efee;
+  --color-warning: #8a5600;
+  --color-warning-050: #fbf2e2;
+  --color-danger: #b03518; /* polito #c73d1c, one notch down for AA on tints */
+  --color-danger-050: #fbeae6;
+  --color-info: #175a7d;
+  --color-info-050: #e8eef3;
+
+  /* Typography — self-hosted, no CDN (see styles/fonts.css) */
+  --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Poppins', 'Roboto', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: 2.75rem;
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-loose: 1.7;
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  /* The uppercase habit: structural/interactive text only, never prose. */
+  --tracking-caps: 0.06em;
+  --tracking-caps-wide: 0.12em;
+
+  /* Space (4px scale) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+
+  /* Radii & elevation — near-square, shadows used sparingly */
+  --radius-sm: 3px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 3px 12px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 3px 12px rgba(0, 0, 0, 0.16);
+  --shadow-header: 0 3px 6px rgba(0, 0, 0, 0.16);
+
+  /* Layout — two-bar fixed header */
+  --container-max: 1360px;
+  --header-utility-height: 34px;
+  --header-main-height: 66px;
+  --header-height: calc(var(--header-utility-height) + var(--header-main-height));
+  --transition: 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  /* Derived */
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+  --hairline: 1px solid var(--color-line);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --header-utility-height: 30px;
+    --header-main-height: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: 0ms linear;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
