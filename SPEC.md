@@ -1,5 +1,5 @@
 # Visionary Lab — Equipment Loan Platform
-## Complete Technical Specification (v1.1, binding)
+## Complete Technical Specification (v1.2, binding)
 
 **Status:** FROZEN CONTRACT. Backend and frontend teams implement in parallel against this document.
 **Scope:** full rewrite/modernization of `https://prestitivlab.polito.it` (Politecnico di Torino — Visionary Lab / Ufficio Multimedialità equipment loans).
@@ -7,6 +7,8 @@
 **Date format everywhere in the API:** ISO-8601. Dates `YYYY-MM-DD`, times `HH:MM` (24h, no seconds), timestamps `YYYY-MM-DDTHH:MM:SSZ` (UTC, `Z` suffix, seconds precision).
 
 **v1.1 (2026-07-31):** documented two features implemented after the v1.0 freeze — the order form PDF export (§7.5 #89, §7.9 #89) and substitute products (§6.22, §7.4 `Product.substitutes`, §7.5 #87/#88, §7.7 #87, §7.8 #32 `suggested_substitutes`, §7.9 #88). No previously frozen field or endpoint was renamed or removed.
+
+**v1.2 (2026-07-31):** documented two more post-freeze features — the obfuscated per-user iCal feed (§6.1 `users.ical_token`/`ical_token_generated_at`, §6.12 `edit` event action, §7.5 #90–92, new §7.13) and admin full order editing (§6.12 `edit` action, §7.5 #93, §7.9 #43/#93, §8.2 row 17, §8.4, §9.2, §9.3 `orders.edit_full`) — plus a documentation-only correction: `pending_regulations.blocking` is present on `/auth/login`, `/auth/refresh` and `/auth/me`, not only on `/me/regulations/pending` (§5.5, §7.6 #3/#6). No previously frozen field or endpoint was renamed or removed.
 
 > **Rule for implementers:** if this document and your intuition disagree, this document wins. If something is genuinely absent, pick the option that requires the *fewest* new JSON fields and add a `TODO(spec)` comment. Never rename a JSON field.
 
@@ -502,7 +504,7 @@ Violation object shape (identical everywhere it appears):
 
 Three scopes:
 
-- `global` — every user must accept the current version. Enforced at login: `GET /api/v1/auth/me` and the login response both return `pending_regulations`. The SPA blocks all routes except `/regolamento/accetta` until empty. Backend enforcement: **only** `POST /api/v1/orders` is hard-blocked (409) — read-only browsing stays allowed so the user can read the document.
+- `global` — every user must accept the current version. Enforced at login: `GET /api/v1/auth/me` and the login response both return `pending_regulations`. The SPA blocks all routes except `/regolamento/accetta` until empty. Backend enforcement: **only** `POST /api/v1/orders` is hard-blocked (409) — read-only browsing stays allowed so the user can read the document. Every `pending_regulations` item, on **all three** of `POST /auth/login`, `POST /auth/refresh` and `GET /auth/me` (§7.6 #3/#4/#6), carries a `blocking` boolean (`true` for `scope = "global"`); the SPA's `<RegulationGate>` keys the blocking interstitial off exactly that flag (§11.4), not off `scope` directly.
 - `category` — required when the cart contains ≥1 product in that category.
 - `product` — required when the cart contains that product.
 
@@ -551,10 +553,12 @@ Index naming: `idx_{table}_{cols}`, unique: `uniq_{table}_{cols}`, FK: `fk_{tabl
 | ldap_groups | json | yes | null | last seen groups, for debugging |
 | last_login_at | datetime | yes | null | |
 | notes | text | yes | null | staff-only note about the user |
+| ical_token | string(64) | yes | null | 64-hex opaque credential for the obfuscated iCal feed URL; minted lazily on first `GET /me/ical`, single active value per user, rotated (never reused) by `POST /me/ical/rotate` — added in migration `0021_add_ical_token_to_users` |
+| ical_token_generated_at | datetime | yes | null | timestamp of the last mint/rotation — added in migration `0021_add_ical_token_to_users` |
 | created_at / updated_at | datetime | yes | | |
 | deleted_at | datetime | yes | null | soft delete |
 
-Indexes: `uniq_users_ldap_uid (ldap_uid)`, `idx_users_role (role)`, `idx_users_email (email)`.
+Indexes: `uniq_users_ldap_uid (ldap_uid)`, `idx_users_role (role)`, `idx_users_email (email)`, `uniq_users_ical_token (ical_token)`.
 
 ## 6.2 `refresh_tokens`
 
@@ -766,7 +770,7 @@ Indexes: `uniq_order_item_units (order_item_id, product_unit_id)`, `idx_order_it
 | order_id | fk → orders.id | no | cascade |
 | from_status | string(32) | yes | null on creation |
 | to_status | string(32) | no | |
-| action | string(64) | no | `submit\|approve\|reject\|cancel\|pickup\|return\|mark_no_show\|mark_overdue\|reopen\|note` |
+| action | string(64) | no | `submit\|approve\|reject\|cancel\|pickup\|return\|mark_no_show\|mark_overdue\|reopen\|note\|edit` |
 | actor_id | fk → users.id | yes | null ⇒ system |
 | actor_type | string(16) | no | `user\|system` |
 | actor_role | string(32) | yes | role at the time |
@@ -775,6 +779,8 @@ Indexes: `uniq_order_item_units (order_item_id, product_unit_id)`, `idx_order_it
 | created_at / updated_at | datetime | yes | |
 
 Indexes: `idx_order_events_order (order_id, created_at)`.
+
+`action: "edit"` is written only by the admin full-edit path (`orders.edit_full` — `PUT /orders/{id}` for admins and `POST /orders/{id}/change-dates`), with `meta = {"changes": {...}, "edit_full": true}` (plus `"forced": true` and `"overbooked_products": [...]` when saved with `force: true`). The pre-existing staff edit (`PUT /orders/{id}` for technician/assistant, §7.9 #43) still writes `action: "note"` with `meta = {"changes": {...}}` — unchanged.
 
 ## 6.13 `settings`
 
@@ -1434,6 +1440,10 @@ Legend for the **Auth** column: `–` public, `A` any authenticated user, `S` st
 | 87 | PUT | `/api/v1/products/{id}/substitutes` | T/AD |
 | 88 | POST | `/api/v1/cart/items/{itemId}/swap` | S |
 | 89 | GET | `/api/v1/orders/{id}/pdf` | A (own) / T/B/AD (any) |
+| 90 | GET | `/api/v1/ical/{token}.ics` | – |
+| 91 | GET | `/api/v1/me/ical` | A |
+| 92 | POST | `/api/v1/me/ical/rotate` | A |
+| 93 | POST | `/api/v1/orders/{id}/change-dates` | AD |
 
 ## 7.6 System & auth endpoints
 
@@ -1504,17 +1514,17 @@ Response `200`:
   "user": { "…User…" },
   "pending_regulations": [
     { "id": 1, "slug": "regolamento-generale", "title": "Regolamento generale del laboratorio",
-      "version": 3, "scope": "global", "content_type": "markdown" }
+      "version": 3, "scope": "global", "content_type": "markdown", "blocking": true }
   ]
 }
 ```
-`pending_regulations` lists **global**, active, published, `requires_acceptance` regulations the user has not accepted at the current version. Empty array when nothing is pending.
+`pending_regulations` lists **global**, active, published, `requires_acceptance` regulations the user has not accepted at the current version. Empty array when nothing is pending. Every item carries `blocking` (`true` for `scope = "global"`, always `true` here since this list is global-only) — see §5.5.
 
 Errors: `401 invalid_credentials` (wrong user or password — never distinguish the two), `403 account_disabled`, `429 too_many_attempts`, `503 ldap_unavailable`.
 
 ### 4. `POST /api/v1/auth/refresh`
 
-Request `{ "refresh_token": "9f2c…" }`. Response identical to login (new access **and** new refresh token; the old refresh token is revoked). Errors: `401 refresh_invalid|refresh_expired|refresh_reused`.
+Request `{ "refresh_token": "9f2c…" }`. Response identical to login, including `pending_regulations[].blocking` (new access **and** new refresh token; the old refresh token is revoked). Errors: `401 refresh_invalid|refresh_expired|refresh_reused`.
 
 ### 5. `POST /api/v1/auth/logout`
 
@@ -1537,14 +1547,15 @@ Response `200`:
     "users.manage": false,
     "regulations.manage": false,
     "closures.manage": false,
+    "orders.edit_full": false,
     "audit.view": false
   },
-  "pending_regulations": [ … ],
+  "pending_regulations": [ { "…as in login (§7.6 #3)…", "blocking": true } ],
   "cart_items_count": 2,
   "active_orders_count": 1
 }
 ```
-The `permissions` object is the **exact** key set of §9. The frontend must gate UI on these booleans and never on `role` string comparisons.
+The `permissions` object is the **exact** key set of §9 (§9.3). `orders.edit_full` is `true` only for `admin` — it gates the admin full-edit path of `PUT /orders/{id}` and `POST /orders/{id}/change-dates` (§7.9 #43/#93). The frontend must gate UI on these booleans and never on `role` string comparisons.
 
 ### 7. `PATCH /api/v1/auth/me`
 
@@ -2071,16 +2082,47 @@ Response: paginated `OrderSummary`, plus:
 
 ### 42. `GET /api/v1/orders/{id}` — `Order` detail. `403 forbidden` if a student requests someone else's order.
 
-### 43. `PUT /api/v1/orders/{id}` — T/B/AD — edit an order **before pickup**
+### 43. `PUT /api/v1/orders/{id}` — T/B/AD — edit an order
 
-Allowed in statuses `pending` and `approved` only (else `409 invalid_transition`).
+Two distinct paths behind one route, branching on the caller's role.
+
+**Technician / assistant — legacy edit, before pickup only.** Allowed in statuses `pending` and `approved` only (else `409 invalid_transition`).
 ```json
 { "pickup_date": "2026-08-02", "pickup_time": "10:00",
   "return_date": "2026-08-06", "return_time": "16:00",
   "subject": "…", "professor": "…", "staff_notes": "…",
   "items": [ { "product_id": 128, "quantity": 2 } ] }
 ```
-Passing `items` replaces the item set. Availability is re-validated with `exclude_order_id = {id}`. Limits are re-evaluated and `exceeds_limits`/`limit_violations` refreshed. Writes an `order_events` row with `action: "note"` and a `meta.changes` diff. Response `200 Order`.
+Passing `items` replaces the item set. Availability is re-validated with `exclude_order_id = {id}`. Limits are re-evaluated and `exceeds_limits`/`limit_violations` refreshed. Writes an `order_events` row with `action: "note"` and a `meta.changes` diff. Response `200 Order`. `motivation`, `notes` and `force` are **admin-only fields**: sending any of them as non-admin is `403 forbidden` (`orders.edit_full` required), even when the order is otherwise editable.
+
+**Admin — full edit (`orders.edit_full`), any submitted order, any state, past or future.** `draft` is excluded (`409 invalid_transition` — a draft is edited from the cart). Unlike the legacy path, status is irrelevant: `pending`, `approved`, `picked_up`, `overdue`, `rejected`, `cancelled`, `returned`, `returned_late`, `no_show` are all editable, and the order's `status` itself is never touched by this call.
+```json
+{ "pickup_date": "2026-08-11", "pickup_time": "10:30",
+  "return_date": "2026-08-13", "return_time": "16:00",
+  "subject": "…", "professor": "…", "motivation": "…", "notes": "…", "staff_notes": "…",
+  "items": [ { "product_id": 128, "quantity": 2 } ],
+  "force": false, "comment": "Correzione dati errati." }
+```
+- Editable fields: `pickup_date`, `pickup_time`, `return_date`, `return_time`, `subject`, `professor`, `motivation`, `notes`, `staff_notes`, `items` (full replace — existing `order_items` rows are updated in place for products kept, so unit-assignment history stays attached; rows for dropped products are deleted along with their `order_item_units`).
+- **Availability is always re-checked** on the new date/item configuration with `exclude_order_id = {id}` (own demand excluded), regardless of the order's status. A shortfall → `422 insufficient_availability` with `details.products[]` (`product_id`, `requested`, `available`) and **nothing is saved**.
+- `force: true` saves anyway, an explicit "the physical reality overrides the calendar" override. The response then adds `"forced_overbook": true` and `"overbooked_products": [ { "product_id": …, "requested": …, "available": … } ]` (same shape as the 422 `details.products`), and the `order_events`/`audit_logs` rows record `forced: true` / `forced_overbook`.
+- Limits are re-evaluated and `exceeds_limits`/`limit_violations` refreshed; limit violations never block an admin correction (they are recorded, not enforced).
+- Writes an `order_events` row with `action: "edit"` and `meta = {"changes": {...}, "edit_full": true}` (only when something actually changed) — see §6.12. Also writes an `audit_logs` row `action: "order.edit_full"`, `entity_type: "Order"`, `entity_id: "{id}"`, `changes: {"before": {...}, "after": {...}}` (plus `forced_overbook` when forced).
+- Response `200 Order` (+ `forced_overbook`/`overbooked_products` when forced).
+
+Technician/assistant get `403 forbidden` if they send `motivation`, `notes` or `force` (full-edit-only fields), even on an otherwise-editable `pending`/`approved` order.
+
+### 93. `POST /api/v1/orders/{id}/change-dates` — **admin only**
+
+A narrower sibling of #43's admin path: same `editOrderFull` engine (`datesOnly = true`), restricted to the dates/slot surface — a quick correction that doesn't risk touching items or the free-text fields.
+```json
+{ "pickup_date": "2026-09-14", "pickup_time": "10:00",
+  "return_date": "2026-09-16", "return_time": "16:00",
+  "force": false, "comment": "Spostato su richiesta del docente." }
+```
+Only `pickup_date`, `pickup_time`, `return_date`, `return_time`, `force`, `comment` are read from the body — any other field (e.g. `subject`) is silently ignored, unlike #43. Governed by the state machine `change_dates` action (§8.2 row 17): valid from any non-draft state (`pending`, `approved`, `rejected`, `cancelled`, `picked_up`, `overdue`, `returned`, `returned_late`, `no_show`), role-gated to `admin` only. Same availability re-check (`exclude_order_id = {id}`), same `422 insufficient_availability` / `force: true` override / `forced_overbook` response shape, same `order_events action: "edit"` + `audit_logs action: "order.edit_full"` as #43's full-edit path.
+
+Non-admin staff (technician, assistant) get `403 forbidden` — the endpoint itself is admin-only, independent of order state. **The order owner (student) never reaches this endpoint at all**, in any state, not even `pending`: a submitted order is frozen on the student side (§5.5/§8 design decision — corrections are staff/admin territory only). Response `200 Order` (+ `forced_overbook`/`overbooked_products` when forced).
 
 ### 44. `POST /api/v1/orders/{id}/approve` — T/B/AD
 ```json
@@ -2481,6 +2523,38 @@ Returns `text/csv; charset=utf-8` with `Content-Disposition: attachment; filenam
 
 `orders` columns (in order): `code,status,student_uid,student_name,subject,professor,pickup_date,pickup_time,return_date,return_time,picked_up_at,returned_at,late_days,items_count,exceeds_limits,decided_by,submitted_at`.
 
+## 7.13 iCal feed endpoints
+
+An obfuscated, rotatable, per-user `text/calendar` subscription (`webcal`-style) so a student or staff member can add their pickups/returns to Google Calendar / Outlook / Apple Calendar.
+
+### 90. `GET /api/v1/ical/{token}.ics` — no auth
+
+The URL is public — calendar clients cannot send an `Authorization` header — so the 64-hex `token` **is the credential**: 32 random bytes (`bin2hex(random_bytes(32))`), unguessable, unique, single active value per user (`users.ical_token`, §6.1). The route pattern constrains the token to `[0-9a-f]{32,64}`; anything else (wrong length/charset) never matches the route and falls through to the generic `404`.
+
+Resolution: look up `users.ical_token = {token}`; `404 not_found` if no match **or** the matched user has `is_active = false` (a disabled account's link stops working immediately, no separate revocation step needed).
+
+Response `200`: `Content-Type: text/calendar; charset=utf-8`, `Content-Disposition: inline; filename="visionary-lab.ics"`, `Cache-Control: private, max-age=300`. Body is RFC 5545: CRLF line endings throughout, content lines folded at 75 octets (continuation lines start with a single space; multi-byte UTF-8 characters are never split across a fold), `TEXT` values escape `\`, newlines (→ `\n`), `;` and `,` per §3.3.11, applied in that order (backslash first, so escaping never double-escapes itself).
+
+**Two `VEVENT`s per order, not one spanning event** — a pickup appointment and a return appointment, `UID`s `vlab-order-{id}-pickup@visionarylab.polito.it` / `vlab-order-{id}-return@visionarylab.polito.it` (stable across regenerations and across token rotation, so calendar clients update in place instead of duplicating). Event `DTSTART`/`DTEND` span one slot (`settings.hours.slot_duration_minutes`, default 30) starting at the order's `pickup_time`/`return_time`; a leg with no time booked defaults to `09:00` rather than emitting an all-day block. `STATUS` is `TENTATIVE` for `pending` orders, `CONFIRMED` otherwise. Only orders with status in `pending, approved, picked_up, overdue` appear — terminal statuses (`rejected`, `cancelled`, `returned`, `returned_late`, `no_show`) are never in the feed. `SUMMARY` is `"Ritiro {code} · N articoli"` / `"Riconsegna {code} · N articoli"` (staff feed appends `" · {owner display name}"`). `DESCRIPTION` lists status, equipment (from `order_items.product_name_snapshot`, falling back to the live product name, then `"Attrezzatura #{id}"`), and the other leg's date. `LOCATION` is `"{lab.room}, {lab.address}"` (either half omitted if blank) when at least one is set. **No `VTIMEZONE` block**: slot times are stored as local wall clock in the lab timezone (`hours.timezone`) and converted per-event to UTC `…Z` instants at render time, so DST transitions are handled correctly without shipping timezone rules.
+
+Two scopes, selected by the resolved user's role:
+- **Student** (non-staff): only that user's own orders, no rolling-window limit (their whole active history).
+- **Staff** (`technician`/`assistant`/`admin`): every user's orders (lab-wide feed), restricted to a **rolling window** — `pickup_date` or `return_date` within `[today − 30 days, today + 120 days]` (`IcalService::STAFF_PAST_DAYS` / `STAFF_FUTURE_DAYS`). Orders outside the window are simply absent from the feed, not an error.
+
+Errors: `404 not_found` — unknown/rotated token, malformed token, or disabled account.
+
+### 91. `GET /api/v1/me/ical` — A
+
+Returns (and lazily mints, on first call) the caller's feed URL. Reading never rotates the token — repeated calls return the same value until an explicit rotate.
+```json
+{ "token": "3fa1…64hex", "feed_url": "https://vlab.example/api/v1/ical/3fa1…64hex.ics",
+  "generated_at": "2026-07-31T09:00:00Z" }
+```
+
+### 92. `POST /api/v1/me/ical/rotate` — A
+
+Mints a brand-new token and immediately invalidates the previous one — the old `feed_url` starts returning `404` at once (§90). Exactly one active token per user at all times (enforced by `uniq_users_ical_token`). Audit-logged: `audit_logs action: "user.ical_rotate"`, `entity_type: "User"`, `entity_id: "{user.id}"`. Response: same shape as #91.
+
 ---
 
 # 8. Order state machine
@@ -2522,6 +2596,7 @@ Returns `text/csv; charset=utf-8` with `Content-Disposition: attachment; filenam
 | 14 | `rejected`,`cancelled`,`no_show`,`returned`,`returned_late` | `reopen` | `pending` \| `approved` \| `picked_up` | **admin only** | `reason` required; availability re-validated | audit-logged; `order_events.meta.reason` |
 | 15 | any non-terminal | `note` | *(unchanged)* | technician, assistant, admin | – | appends an `order_events` row; `staff_notes` may be replaced |
 | 16 | `pending`,`approved` | `edit` | *(unchanged)* | technician, assistant, admin | availability re-validated excluding self | limits re-evaluated; `order_events` diff |
+| 17 | `pending`,`approved`,`rejected`,`cancelled`,`picked_up`,`overdue`,`returned`,`returned_late`,`no_show` (any non-draft) | `change_dates` | *(unchanged)* | **admin only** | availability re-validated excluding self; `force: true` overrides a shortfall | `orders.edit_full`; `order_events action: "edit"`, `meta.edit_full = true`; `audit_logs action: "order.edit_full"`; see §7.9 #93. **The order owner never triggers this**, at any status — a submitted order is frozen student-side |
 
 **Anything not in this table is forbidden** → `409 invalid_transition` with:
 ```json
@@ -2566,7 +2641,7 @@ Returns `text/csv; charset=utf-8` with `Content-Disposition: attachment; filenam
 
 ## 8.4 `allowed_actions` computation
 
-`OrderStateMachine::allowedActions(Order $o, User $viewer): string[]` returns the subset of `{submit, approve, reject, cancel, pickup, return, mark_no_show, reopen, edit, note}` reachable **for that viewer** given §8.2, including the student cancellation deadline. This is the value serialized into `Order.allowed_actions`. Frontend buttons are rendered exclusively from it.
+`OrderStateMachine::allowedActions(Order $o, User $viewer): string[]` returns the subset of `{submit, approve, reject, cancel, pickup, return, mark_no_show, reopen, edit, note, change_dates}` reachable **for that viewer** given §8.2, including the student cancellation deadline. This is the value serialized into `Order.allowed_actions`. Frontend buttons are rendered exclusively from it. `change_dates` appears only for `admin` (row 17) — it is present for every non-draft status when the viewer is an admin, and absent for every other role and for the order's own owner, in every status.
 
 ---
 
@@ -2579,7 +2654,7 @@ Returns `text/csv; charset=utf-8` with `Content-Disposition: attachment; filenam
 | `student` | Studente | Default for anyone authenticating without a staff group. |
 | `technician` | Tecnico | Lab technician: full operational control over catalog and orders. |
 | `assistant` | Borsista | Scholarship assistant: a **limited technician**. Handles orders and adds product logs; cannot touch the catalog structure, settings, or global statistics. |
-| `admin` | Amministratore | Everything, plus settings, user roles, regulation deletion, order reopen, audit log. |
+| `admin` | Amministratore | Everything, plus settings, user roles, regulation deletion, order reopen, full order editing (`orders.edit_full`), audit log. |
 
 ## 9.2 Capability matrix
 
@@ -2612,7 +2687,9 @@ Legend: ✔ allowed · ✖ denied · **O** only own records · ◐ limited (see 
 | Cancel order | ✖ | O ◐⁴ | ✔ | ✔ | ✔ |
 | Mark picked up / returned | ✖ | ✖ | **✔** | ✔ | ✔ |
 | Mark no-show | ✖ | ✖ | ✔ | ✔ | ✔ |
-| Edit order dates/items (pre-pickup) | ✖ | ✖ | ✔ | ✔ | ✔ |
+| Edit order dates/items (pre-pickup, `pending`/`approved` only) | ✖ | ✖ | ✔ | ✔ | ✔ |
+| **Full edit** any order (`orders.edit_full`) — any state, past/present/future, `force` override | ✖ | ✖ | ✖ | ✖ | **✔** |
+| `POST .../change-dates` date/slot correction, any non-draft state | ✖ | ✖⁶ | ✖ | ✖ | **✔** |
 | Add staff notes to order | ✖ | ✖ | ✔ | ✔ | ✔ |
 | View staff notes | ✖ | ✖ | ✔ | ✔ | ✔ |
 | **Reopen** a terminal order | ✖ | ✖ | ✖ | **✖** | ✔ |
@@ -2649,6 +2726,7 @@ Notes:
 3. Staff accounts do not have a cart in v1. `POST /cart/*` and `POST /orders` return `403 role_required` for non-students. If a technician needs to book for a student, they create the order through the student's record — **out of scope for v1**; the documented workaround is to have the student submit and the technician approve.
 4. A student may cancel `pending` freely, and `approved` only before the cancellation deadline.
 5. The assistant's `stats/overview` response has `scope: "limited"` and omits the `totals` and `inventory` blocks.
+6. Even the order's **owner** is denied — a submitted order is frozen student-side: no date/item editing at all once out of the cart, in any status, including while `pending`.
 
 ## 9.3 `permissions` object returned by `/auth/me`
 
@@ -2668,6 +2746,7 @@ Notes:
 | `regulations.delete` | false | false | false | **true** |
 | `closures.manage` | false | **false** | true | true |
 | `orders.reopen` | false | false | false | **true** |
+| `orders.edit_full` | false | false | false | **true** |
 | `audit.view` | false | false | false | **true** |
 
 This table is the definitive answer to "what exactly is a borsista allowed to do". Backend `RequireRoleMiddleware` and frontend guards must both derive from it.
@@ -2929,10 +3008,10 @@ Every guarded route that fails redirects to `/login?next=<path>` (unauthenticate
 | `/regolamento` | `RegulationsPage` | public | `GET /regulations` | List of published regulations, grouped by scope |
 | `/regolamento/:slug` | `RegulationDetailPage` | public | `GET /regulations/{slug}` | Markdown render or embedded PDF (`<object data="/api/v1/regulations/{id}/file?token=…">`) |
 | `/regolamento/accetta` | `AcceptRegulationsPage` | auth | `GET /me/regulations/pending`, `POST /me/regulations/{id}/accept` | **Interstitial**: rendered instead of any other route while blocking global regulations are pending |
-| `/profilo` | `ProfilePage` | auth | `GET /auth/me`, `PATCH /auth/me` | Personal data (read-only from LDAP), phone/course editable, accepted-regulations list, quota widget |
+| `/profilo` | `ProfilePage` | auth | `GET /auth/me`, `PATCH /auth/me`, `GET /me/ical`, `POST /me/ical/rotate` | Personal data (read-only from LDAP), phone/course editable, accepted-regulations list, quota widget, **`IcalFeedCard`**: feed URL + copy + rotate-behind-confirmation |
 | `/gestione` | `StaffDashboardPage` | staff | `GET /stats/overview`, `GET /orders?status=pending`, `GET /orders/calendar` | Operational dashboard: pending queue, today's pickups/returns, overdue alerts |
 | `/gestione/ordini` | `StaffOrdersPage` | staff | `GET /orders`, transition endpoints | Table with filters, bulk-free single-row actions, drawer for detail |
-| `/gestione/ordini/:id` | `StaffOrderDetailPage` | staff | `GET /orders/{id}`, all transition endpoints, `POST /products/{id}/logs` | Approve/reject/pickup/return workflows, unit assignment UI, return inspection with log creation |
+| `/gestione/ordini/:id` | `StaffOrderDetailPage` | staff | `GET /orders/{id}`, all transition endpoints, `POST /products/{id}/logs`, `PUT /orders/{id}` (admin full edit), `POST /orders/{id}/change-dates` (admin) | Approve/reject/pickup/return workflows, unit assignment UI, return inspection with log creation; **admin-only full-edit form** gated on `permissions['orders.edit_full']` (§9.3), reachable when `allowed_actions` contains `edit`/`change_dates` |
 | `/gestione/calendario` | `StaffCalendarPage` | staff | `GET /orders/calendar`, `GET /calendar/opening` | Month grid of pickups/returns/closures |
 | `/gestione/prodotti` | `AdminProductsPage` | technician+ | `GET /products?status=*`, `DELETE /products/{id}` | Table with search/filter, quick status toggle |
 | `/gestione/prodotti/nuovo` | `ProductFormPage` | technician+ | `POST /products`, `GET /categories` | Full create form incl. initial units and recommendations |
