@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { Link } from 'react-router-dom';
 import { Icon } from './Icon';
 import { Badge, Button, ProductImage } from './ui';
+import { getAccessToken } from '@/api/client';
 import { useEnums } from '@/hooks/useEnums';
 import { t } from '@/i18n/it';
 import { formatDate, formatDateTime, formatMonthLabel } from '@/lib/format';
@@ -371,6 +372,13 @@ export function MarkdownView({ source }: { source: string | null | undefined }) 
 
 /* ------------------------------------------------------ RegulationAcceptBlock */
 
+/** PDF stream URL carrying the access token as a query param (SPEC §7.10 #56). */
+function pdfHref(fileUrl: string | null | undefined): string {
+  if (!fileUrl) return '#';
+  const token = getAccessToken();
+  return `${fileUrl}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+}
+
 /**
  * The checkbox stays disabled until the body has been scrolled to the end
  * (SPEC §11.5). Short documents that do not overflow are immediately readable
@@ -424,7 +432,22 @@ export function RegulationAcceptBlock({
         {regulation.content_type === 'pdf' ? (
           <p>
             {t('regulations.pdfFallback')}{' '}
-            <Link to={`/regolamento/${regulation.slug}`}>{t('regulations.downloadPdf')}</Link>
+            {/*
+              Straight to the PDF stream in a new tab, not to the detail route:
+              this block is also used inside the blocking gate, where navigating
+              the shell behind the modal would leave the document unreadable.
+              The `?token=` form is the one SPEC §7.10 #56 provides for embeds.
+            */}
+            <a
+              href={pdfHref(regulation.file_url)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                if (!regulation.file_url) e.preventDefault();
+              }}
+            >
+              {t('regulations.downloadPdf')}
+            </a>
           </p>
         ) : (
           <MarkdownView source={regulation.body} />
